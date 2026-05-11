@@ -63,9 +63,27 @@ const INVOICES_INIT = [
 ];
 
 const COVERAGE_OPTS = [
-  { id: 'door-to-door',   label: 'Bodega a bodega',                         recommended: true  },
-  { id: 'origin-to-door', label: 'Puerto de origen → bodega destino',        recommended: false },
-  { id: 'dest-to-door',   label: 'Puerto de destino → bodega destino',       recommended: false },
+  {
+    id: 'door-to-door',
+    label: 'Bodega a bodega',
+    description: 'Cobertura completa desde origen hasta entrega final',
+    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&q=80',
+    recommended: true,
+  },
+  {
+    id: 'origin-to-door',
+    label: 'Puerto origen → bodega destino',
+    description: 'Desde el embarque internacional hasta tu bodega',
+    image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=800',
+    recommended: false,
+  },
+  {
+    id: 'dest-to-door',
+    label: 'Puerto destino → bodega destino',
+    description: 'Desde la llegada al país hasta tu bodega',
+    image: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&q=80',
+    recommended: false,
+  },
 ];
 
 const ADICIONALES_ITEMS = [
@@ -378,61 +396,55 @@ function InvoiceList({ items, onToggle, onSetCompleteness, onSetPartial }) {
 // ─── Coverage selector ────────────────────────────────────────────────────────
 function CoverageSelector({ selected, onChange }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
       {COVERAGE_OPTS.map(opt => {
         const active = selected === opt.id;
         return (
-          <div key={opt.id} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden',
-            border: `1.5px solid ${active ? C.primaryLight : C.gray200}`,
-            background: active ? C.primary50 : C.white,
-            transition: 'border-color 0.15s ease, background 0.15s ease',
-          }}>
-            {/* Left accent bar */}
+          <button
+            key={opt.id}
+            onClick={() => onChange(opt.id)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              padding: 0, border: 'none', background: 'transparent',
+              cursor: 'pointer', textAlign: 'center',
+              borderRadius: 10, overflow: 'hidden',
+              outline: `2px solid ${active ? C.primaryLight : C.gray200}`,
+              outlineOffset: -2,
+              boxShadow: active ? `0 0 0 3px ${C.primaryUL}` : 'none',
+              transition: 'outline-color 0.15s ease, box-shadow 0.15s ease',
+            }}
+          >
+            {/* Card image */}
+            <div style={{ width: '100%', height: 88, overflow: 'hidden', flexShrink: 0 }}>
+              <img
+                src={opt.image}
+                alt={opt.label}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            </div>
+
+            {/* Card body */}
             <div style={{
-              position: 'absolute', left: 0, top: 0, bottom: 0, width: 4,
-              background: active ? C.primaryLight : 'transparent',
+              width: '100%', padding: '10px 10px 12px',
+              background: active ? C.primary50 : C.white,
               transition: 'background 0.15s ease',
-            }} />
-
-            <button onClick={() => onChange(opt.id)} style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-              padding: '13px 14px 13px 18px',
-              background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
             }}>
-              {/* Radio circle */}
-              <div style={{
-                width: 17, height: 17, borderRadius: '50%', flexShrink: 0,
-                border: `2px solid ${active ? C.primaryLight : C.gray300}`,
-                background: active ? C.primaryLight : C.white,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'all 0.15s ease',
-              }}>
-                {active && <div style={{ width: 5, height: 5, borderRadius: '50%', background: C.white }} />}
-              </div>
-
-              {/* Label */}
               <span style={{
-                fontFamily: FONT, fontSize: 14,
-                fontWeight: active ? 600 : 400,
-                color: active ? C.primary : C.textPrimary,
-                flex: 1, transition: 'color 0.15s ease',
+                fontFamily: FONT, fontSize: 12, fontWeight: 700, lineHeight: 1.3,
+                color: active ? C.primaryLight : C.primary,
+                transition: 'color 0.15s ease',
               }}>
                 {opt.label}
               </span>
-
-              {/* Recomendado badge */}
-              {opt.recommended && (
-                <span style={{
-                  background: '#EBF5E8', color: C.successDark,
-                  borderRadius: 12, padding: '3px 9px',
-                  fontFamily: FONT, fontSize: 11, fontWeight: 600,
-                  whiteSpace: 'nowrap', flexShrink: 0,
-                }}>
-                  Recomendado
-                </span>
-              )}
-            </button>
-          </div>
+              <span style={{
+                fontFamily: FONT, fontSize: 11, fontWeight: 400, lineHeight: 1.4,
+                color: C.gray400,
+              }}>
+                {opt.description}
+              </span>
+            </div>
+          </button>
         );
       })}
     </div>
@@ -756,7 +768,7 @@ function ResumenCosto({ prima, iva, total }) {
 }
 
 // ─── Modal body ───────────────────────────────────────────────────────────────
-function ModalBody({ asegurarTab, setAsegurarTab, invoices, setInvoices, coverage, setCoverage, adicionales, setAdicionales, contenedorChecked, setContenedorChecked, envio, setEnvio, coberturas, setCoberturas }) {
+function ModalBody({ asegurarTab, setAsegurarTab, invoices, setInvoices, adicionales, setAdicionales, contenedorChecked, setContenedorChecked, envio, setEnvio, coberturas, setCoberturas }) {
   const showMercancia  = asegurarTab === 'mercancia'  || asegurarTab === 'ambos';
   const showContenedor = asegurarTab === 'contenedor' || asegurarTab === 'ambos';
 
@@ -845,30 +857,26 @@ function ModalBody({ asegurarTab, setAsegurarTab, invoices, setInvoices, coverag
         </>
       )}
 
-      {/* Alcance + Valores — Mercancía y Ambos */}
+      {/* Valores Adicionales a Asegurar — Mercancía y Ambos */}
       {showMercancia && (
         <>
-          <Section title="Alcance de cobertura">
-            <CoverageSelector selected={coverage} onChange={setCoverage} />
-          </Section>
-          <Divider />
-          <Section title="Valores adicionales">
+          <Section title="Valores Adicionales a Asegurar">
             <ValoresAdicionales adicionales={adicionales} setAdicionales={setAdicionales} />
           </Section>
           <Divider />
         </>
       )}
 
-      {/* Datos del envío — siempre visible */}
-      <Section title="Datos del envío" badge={<AutoBadge />}>
-        <EnvioSection envio={envio} setEnvio={setEnvio} />
+      {/* Coberturas adicionales — siempre visible */}
+      <Section title="Coberturas adicionales">
+        <CoberturasAdicionales coberturas={coberturas} setCoberturas={setCoberturas} />
       </Section>
 
       <Divider />
 
-      {/* Coberturas adicionales — siempre visible */}
-      <Section title="Coberturas adicionales">
-        <CoberturasAdicionales coberturas={coberturas} setCoberturas={setCoberturas} />
+      {/* Información de la mercancía a asegurar — siempre visible */}
+      <Section title="Información de la mercancía a asegurar" badge={<AutoBadge />}>
+        <EnvioSection envio={envio} setEnvio={setEnvio} />
       </Section>
 
       <Divider />
@@ -929,11 +937,12 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
   const [envio, setEnvio]                         = useState(ENVIO_INIT);
   const [coberturas, setCoberturas]               = useState({ lucro: false, gastos: false });
   const [emitted, setEmitted]                     = useState(false);
+  const [step, setStep]                           = useState(1);
 
   useEffect(() => { ensureStyles(); }, []);
 
   useEffect(() => {
-    if (open) { setClosing(false); setMounted(true); setEmitted(false); }
+    if (open) { setClosing(false); setMounted(true); setEmitted(false); setStep(1); }
   }, [open]);
 
   const handleClose = useCallback(() => {
@@ -1017,11 +1026,19 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
         {/* ── Body ── */}
         {emitted ? (
           <SuccessScreen onListo={handleListo} />
+        ) : step === 1 ? (
+          <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <Section title="Alcance de cobertura">
+              <CoverageSelector
+                selected={coverage}
+                onChange={id => { setCoverage(id); setStep(2); }}
+              />
+            </Section>
+          </div>
         ) : (
           <ModalBody
             asegurarTab={asegurarTab} setAsegurarTab={setAsegurarTab}
             invoices={invoices} setInvoices={setInvoices}
-            coverage={coverage} setCoverage={setCoverage}
             adicionales={adicionales} setAdicionales={setAdicionales}
             contenedorChecked={contenedorChecked} setContenedorChecked={setContenedorChecked}
             envio={envio} setEnvio={setEnvio}
@@ -1029,8 +1046,8 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
           />
         )}
 
-        {/* ── Footer — oculto en pantalla de éxito ── */}
-        {!emitted && (
+        {/* ── Footer — visible solo en paso 2 ── */}
+        {!emitted && step === 2 && (
           <div style={{
             display: 'flex', justifyContent: 'flex-end', gap: 8,
             padding: '16px 24px', borderTop: `1px solid ${C.gray200}`,
