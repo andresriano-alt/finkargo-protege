@@ -268,21 +268,16 @@ function InvoiceRow({ invoice, onToggle, onSetCompleteness, onSetPartial }) {
 
   return (
     <div style={{
-      borderRadius: 10,
-      border: `1.5px solid ${checked ? C.primaryLight : C.gray200}`,
-      overflow: 'hidden',
       opacity: checked ? 1 : 0.5,
-      transition: 'opacity 0.2s ease, border-color 0.2s ease',
+      transition: 'opacity 0.2s ease',
     }}>
       {/* ── Main row (clickable to toggle) ── */}
       <div
         onClick={() => onToggle(id)}
         style={{
           display: 'flex', alignItems: 'center', gap: 12,
-          padding: '12px 14px',
-          background: checked ? C.primary50 : C.white,
+          padding: '12px 0',
           cursor: 'pointer',
-          transition: 'background 0.15s ease',
         }}
       >
         {/* Checkbox */}
@@ -359,28 +354,26 @@ function InvoiceList({ items, onToggle, onSetCompleteness, onSetPartial }) {
     return sum + (parseFloat(inv.partial.value) || 0);
   }, 0);
 
-  const anyChecked = items.some(i => i.checked);
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {items.map(inv => (
-        <InvoiceRow
-          key={inv.id}
-          invoice={inv}
-          onToggle={onToggle}
-          onSetCompleteness={onSetCompleteness}
-          onSetPartial={onSetPartial}
-        />
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      {items.map((inv, idx) => (
+        <div key={inv.id}>
+          {idx > 0 && <Divider />}
+          <InvoiceRow
+            invoice={inv}
+            onToggle={onToggle}
+            onSetCompleteness={onSetCompleteness}
+            onSetPartial={onSetPartial}
+          />
+        </div>
       ))}
+
+      <Divider />
 
       {/* ── Total a asegurar ── */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '11px 14px',
-        borderRadius: 8,
-        background: anyChecked ? C.primary50 : C.gray100,
-        border: `1.5px solid ${anyChecked ? C.primaryUL : 'transparent'}`,
-        transition: 'background 0.2s ease, border-color 0.2s ease',
+        padding: '11px 0',
       }}>
         <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: C.gray400 }}>
           Total a asegurar
@@ -480,8 +473,7 @@ function ValoresAdicionales({ adicionales, setAdicionales }) {
           return (
             <div key={item.key} style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              gap: 8, padding: '10px 12px',
-              border: `1.5px solid ${C.gray200}`, borderRadius: 8, background: C.white,
+              gap: 8, padding: '10px 0',
               opacity: isActive ? 0 : 1,
               pointerEvents: isActive ? 'none' : 'auto',
               transition: 'opacity 0.22s ease',
@@ -669,56 +661,53 @@ function CoberturasAdicionales({ coberturas, setCoberturas }) {
   return (
     <div style={{ display: 'flex', gap: 10 }}>
       {/* Left – activatable */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {ACTIVE_COVERAGES.map(cov => {
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {ACTIVE_COVERAGES.map((cov, idx) => {
           const active = coberturas[cov.key];
           return (
-            <div key={cov.key} style={{
-              padding: '12px 14px', borderRadius: 8,
-              border: `1.5px solid ${active ? C.primaryLight : C.gray200}`,
-              background: active ? C.primary50 : C.white,
-              transition: 'all 0.15s ease',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <ToggleSwitch active={active} onToggle={() => toggle(cov.key)} />
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
-                    {cov.label}
-                  </p>
-                  <p style={{ fontFamily: FONT, fontSize: 11, color: C.gray400, margin: '2px 0 0' }}>
-                    {cov.description}
-                  </p>
+            <div key={cov.key}>
+              {idx > 0 && <Divider />}
+              <div style={{ padding: '12px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <ToggleSwitch active={active} onToggle={() => toggle(cov.key)} />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
+                      {cov.label}
+                    </p>
+                    <p style={{ fontFamily: FONT, fontSize: 11, color: C.gray400, margin: '2px 0 0' }}>
+                      {cov.description}
+                    </p>
+                  </div>
+                  <span style={{
+                    background: '#EBF5E8', color: C.successDark,
+                    borderRadius: 20, padding: '3px 8px',
+                    fontFamily: FONT, fontSize: 11, fontWeight: 600,
+                    whiteSpace: 'nowrap', flexShrink: 0,
+                  }}>
+                    +USD {cov.price}
+                  </span>
                 </div>
-                <span style={{
-                  background: '#EBF5E8', color: C.successDark,
-                  borderRadius: 20, padding: '3px 8px',
-                  fontFamily: FONT, fontSize: 11, fontWeight: 600,
-                  whiteSpace: 'nowrap', flexShrink: 0,
-                }}>
-                  +USD {cov.price}
-                </span>
               </div>
             </div>
           );
         })}
       </div>
       {/* Right – disabled */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {DISABLED_COVERAGES.map(cov => (
-          <div key={cov.label} style={{
-            padding: '12px 14px', borderRadius: 8,
-            border: `1.5px dashed ${C.gray200}`,
-            background: C.gray100,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-              <ToggleSwitch active={false} disabled />
-              <div style={{ flex: 1 }}>
-                <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: C.gray300, margin: 0 }}>
-                  {cov.label}
-                </p>
-                <p style={{ fontFamily: FONT, fontSize: 11, color: C.gray300, margin: '2px 0 0' }}>
-                  {cov.note}
-                </p>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {DISABLED_COVERAGES.map((cov, idx) => (
+          <div key={cov.label}>
+            {idx > 0 && <Divider />}
+            <div style={{ padding: '12px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <ToggleSwitch active={false} disabled />
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: C.gray300, margin: 0 }}>
+                    {cov.label}
+                  </p>
+                  <p style={{ fontFamily: FONT, fontSize: 11, color: C.gray300, margin: '2px 0 0' }}>
+                    {cov.note}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
