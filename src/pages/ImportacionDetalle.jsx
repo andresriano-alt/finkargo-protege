@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import InsuranceModal from '../components/InsuranceModal';
+import { Badge } from 'finkargo-design-system/components/Badge/Badge';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -262,7 +263,7 @@ function InsuranceBanner({ onAccept, onDismiss }) {
           color: C.gray400,
           margin: '4px 0 0',
         }}>
-          Protégela desde USD 162 · Sin deducible · 180 días de cobertura
+          Protégela desde USD 162 · Sin deducible · 247 importadores como tú protegieron su mercancía este mes.
         </p>
       </div>
 
@@ -284,7 +285,7 @@ function InsuranceBanner({ onAccept, onDismiss }) {
             whiteSpace: 'nowrap',
           }}
         >
-          Ver cobertura
+          Asegurar mi mercancía
         </button>
         <button
           onClick={onDismiss}
@@ -313,38 +314,46 @@ function InsuranceBanner({ onAccept, onDismiss }) {
 function InsuredBanner() {
   return (
     <div style={{
-      background: C.bannerBg,
+      background: C.bannerBg,           // DS success.ultraLight
       borderRadius: 12,
-      padding: '14px 20px',
+      padding: '13px 20px',
       display: 'flex',
       alignItems: 'center',
       gap: 14,
       margin: '16px 0',
-      border: `1.5px solid ${C.successLight}`,
+      border: `1.5px solid ${C.successLight}`,  // DS success.light
     }}>
+      {/* Check icon — DS success.dark fill */}
       <div style={{
-        width: 40, height: 40, borderRadius: '50%',
-        background: C.successDark,
+        width: 36, height: 36, borderRadius: '50%',
+        background: C.successDark,      // DS success.dark
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <path d="M4.5 10L8.5 14L15.5 7" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M4 9L7.5 12.5L14 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </div>
-      <div style={{ flex: 1 }}>
-        <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: C.successDark, margin: 0 }}>
-          Mercancía asegurada
-        </p>
-        <p style={{ fontFamily: FONT, fontSize: 13, color: C.gray400, margin: '3px 0 0' }}>
-          Certificado #VERT-2025-00847 · Vigente hasta 26 Oct 2025
-        </p>
-      </div>
+
+      {/* Single-line text using DS success token colors */}
+      <p style={{
+        fontFamily: FONT, fontSize: 14, margin: 0, flex: 1,
+        color: C.successDark,           // DS success.dark
+        fontWeight: 500,
+      }}>
+        Mercancía asegurada
+        <span style={{ fontWeight: 400, color: C.gray400 }}>
+          {' '}·{' '}Cert. #VERT-2025-00847 · Vigente hasta 26 Oct 2025
+        </span>
+      </p>
+
+      {/* Ver certificado — DS success.dark color */}
       <button style={{
         background: 'transparent', border: 'none', cursor: 'pointer',
-        fontFamily: FONT, fontSize: 13, fontWeight: 500,
-        color: C.successDark, display: 'flex', alignItems: 'center', gap: 4,
-        flexShrink: 0,
+        fontFamily: FONT, fontSize: 13, fontWeight: 600,
+        color: C.successDark,           // DS success.dark
+        display: 'flex', alignItems: 'center', gap: 4,
+        flexShrink: 0, whiteSpace: 'nowrap',
       }}>
         Ver certificado →
       </button>
@@ -527,21 +536,30 @@ function DocumentosCard({ certAdded }) {
             border: `1px solid ${doc.cert ? C.successLight : C.gray200}`,
             background: doc.cert ? C.bannerBg : C.white,
           }}>
-            <div style={{
-              width: 36, height: 36,
-              borderRadius: 6,
-              background: doc.cert ? C.successUL : doc.type === 'pdf' ? '#FFF0F0' : '#F0F0FF',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-            }}>
-              <span style={{
-                fontFamily: FONT,
-                fontSize: 9,
-                fontWeight: 700,
-                color: doc.cert ? C.successDark : doc.type === 'pdf' ? '#CC071E' : C.primaryLight,
-                letterSpacing: '0.5px',
-              }}>{doc.tag}</span>
-            </div>
+            {/* Tag: DS Badge for CERT, plain chip for others */}
+            {doc.cert ? (
+              <Badge
+                label="CERT"
+                variant="success"
+                size="small"
+                badgeStyle="dark"
+                border={true}
+              />
+            ) : (
+              <div style={{
+                width: 36, height: 36,
+                borderRadius: 6,
+                background: doc.type === 'pdf' ? '#FFF0F0' : '#F0F0FF',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <span style={{
+                  fontFamily: FONT, fontSize: 9, fontWeight: 700,
+                  color: doc.type === 'pdf' ? '#CC071E' : C.primaryLight,
+                  letterSpacing: '0.5px',
+                }}>{doc.tag}</span>
+              </div>
+            )}
             <span style={{
               fontFamily: FONT, fontSize: 13,
               color: doc.cert ? C.successDark : C.textPrimary,
@@ -581,15 +599,17 @@ export default function ImportacionDetalle() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', fontFamily: FONT, overflow: 'hidden' }}>
-      <InsuranceModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onEmit={() => setBannerState('insured')}
-      />
       <Sidebar />
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <TopNav />
+      {modalOpen ? (
+        <InsuranceModal
+          open={true}
+          onClose={() => setModalOpen(false)}
+          onEmit={() => setBannerState('insured')}
+        />
+      ) : (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <TopNav />
 
         <main style={{
           flex: 1,
@@ -729,6 +749,7 @@ export default function ImportacionDetalle() {
           )}
         </main>
       </div>
+      )}
     </div>
   );
 }
