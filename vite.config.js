@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      'finkargo-design-system': new URL('../finkargo-design-system/src', import.meta.url).pathname,
+      'finkargo-design-system': new URL('./src/lib', import.meta.url).pathname,
     },
   },
   optimizeDeps: {

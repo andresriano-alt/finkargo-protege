@@ -1,0 +1,161 @@
+/* ============================================================
+   Tooltip — Finkargo Design System
+   Standalone bubble component. Not a wrapper.
+   Placements: top | bottom | left | right
+   (placement = where the trigger is relative to the tooltip)
+   ============================================================ */
+
+/* ---------- Root ---------- */
+.root {
+  display: inline-flex;
+  width: 195px;
+}
+
+/* Vertical layouts: top / bottom */
+.top,
+.bottom {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Horizontal layouts: left / right */
+.left,
+.right {
+  flex-direction: row;
+  align-items: center;
+}
+
+/* ---------- Bubble ---------- */
+.bubble {
+  background-color: #1C1B66;
+  border-radius: 4px;
+  padding: 8px 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ---------- Content row ---------- */
+.content {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+/* ---------- Info ---------- */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  padding: 4px 0;
+}
+
+/* ---------- Title ---------- */
+.title {
+  margin: 0;
+  font-family: "Albert Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #ffffff;
+}
+
+/* ---------- Description ---------- */
+.description {
+  margin: 0;
+  font-family: "Albert Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: #ffffff;
+}
+
+/* ---------- CTA Button ---------- */
+.cta {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 118px;
+  height: 32px;
+  padding: 0 16px;
+  background-color: #ffffff;
+  color: #1C1B66;
+  border: 1px solid #1C1B66;
+  border-radius: 24px;
+  font-family: "Albert Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 150ms ease;
+}
+
+.cta:hover {
+  opacity: 0.85;
+}
+
+/* ---------- Close button ---------- */
+.closeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: white;
+  margin-top: 2px;
+}
+
+.closeBtn:hover {
+  opacity: 0.7;
+}
+
+/* ---------- Arrow ---------- */
+.arrow {
+  flex-shrink: 0;
+}
+
+/* top placement: trigger is ABOVE tooltip, arrow points up from bottom of bubble */
+.top .arrow {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #1C1B66;
+  margin-left: 16px;
+}
+
+/* bottom placement: trigger is BELOW tooltip, arrow points down from top of bubble */
+.bottom .arrow {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #1C1B66;
+  margin-left: 16px;
+}
+
+/* right placement: trigger is to the RIGHT, arrow points right from left side */
+.right .arrow {
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid #1C1B66;
+}
+
+/* left placement: trigger is to the LEFT, arrow points left from right side */
+.left .arrow {
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 8px solid #1C1B66;
+}

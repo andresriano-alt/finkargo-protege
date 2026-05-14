@@ -1,0 +1,50 @@
+/* ============================================================
+   Badge — Finkargo Design System
+   States: success | info | warning | error | neutral | bag | simple
+   Sizes: small (S) | medium (M) | large (L)
+   Style: light | dark  (controlled via inline style from JS)
+   Border: yes | no     (controlled via inline style from JS)
+   ============================================================ */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: "Albert Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* ---------- Sizes ---------- */
+/* S — height: 21px */
+.sizeSmall {
+  height: 21px;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* M — height: 25px */
+.sizeMedium {
+  height: 25px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* L — height: 33px */
+.sizeLarge {
+  height: 33px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+/* ---------- Icon ---------- */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
