@@ -15,6 +15,7 @@ export default defineConfig({
       '@mui/material/FormControlLabel',
       '@mui/material/Radio',
       '@mui/material/RadioGroup',
+      '@mui/material/Checkbox',
       '@mui/material/OutlinedInput',
       '@mui/material/InputAdornment',
       '@mui/material/FormHelperText',

@@ -44,6 +44,7 @@ const SHADOW = {
 const C = {
   primary:       '#1C1B66',  // tokens.ts primary.main
   primaryLight:  '#2128B1',  // tokens.ts primary.light
+  primaryDark:   '#060735',  // tokens.ts primary.dark
   primaryUL:     '#D6DDF7',  // tokens.ts primary.ultraLight
   primary50:     '#F1F2FF',  // tokens.ts primary[50]
   white:         '#FFFFFF',
@@ -54,10 +55,13 @@ const C = {
   textPrimary:   N[700],     // neutral[700] — primary text
   textSecondary: N[600],     // neutral[600] — secondary text
   successDark:   '#03593A',  // tokens.ts success.dark
+  successLight:  '#AAEAA8',  // tokens.ts success.light
   successMain:   '#2CA14D',  // tokens.ts success.main
   bannerBg:      '#E0F7E6',  // tokens.ts success.ultraLight
   errorMain:     '#CC071E',  // tokens.ts error.main
   errorLight:    '#FFF0F0',  // tokens.ts error.ultraLight
+  secondary:     '#3C47D3',  // tokens.ts secondary.main
+  secondary50:   '#E8ECFC',  // tokens.ts secondary[50]
 };
 const FONT = '"Albert Sans", system-ui, sans-serif';
 
@@ -94,8 +98,8 @@ function ensureStyles() {
 
 // ─── Initial data ─────────────────────────────────────────────────────────────
 const INVOICES_INIT = [
-  { id: 'inv-1', number: 'FAC-001', description: 'Maquinaria industrial de perforación',    amount: 45000, enabled: true, valueMode: 'complete', partialValue: '' },
-  { id: 'inv-2', number: 'FAC-002', description: 'Herramientas y accesorios industriales',  amount: 32500, enabled: true, valueMode: 'complete', partialValue: '' },
+  { id: 'inv-1', number: 'FAC-001', description: 'Maquinaria industrial de perforación',    amount: 45000, incoterm: 'CIF', enabled: true, valueMode: 'complete', partialValue: '' },
+  { id: 'inv-2', number: 'FAC-002', description: 'Herramientas y accesorios industriales',  amount: 32500, incoterm: 'CIF', enabled: true, valueMode: 'complete', partialValue: '' },
 ];
 
 const CONTAINERS_DATA = [
@@ -184,16 +188,16 @@ const COVERAGE_ICON_MAP = { warehouse: WarehouseIcon, ship: ShipCoverageIcon, tr
 
 // Tokens del DS usados en las tarjetas
 const DST = {
-  activeBorder:   '#3C47D3',  // secondary.main
-  activeBg:       '#E8ECFC',  // secondary[50]
-  inactiveBorder: N[200],     // neutral[200]
-  titleActive:    '#3C47D3',  // secondary.main
-  titleInactive:  '#060735',  // primary.dark
-  desc:           N[500],     // neutral[500]
-  iconActiveBg:   '#FFFFFF',
-  iconInactiveBg: N[100],     // neutral[100]
-  iconActive:     '#3C47D3',  // secondary.main
-  iconInactive:   N[600],     // neutral[600]
+  activeBorder:   C.secondary,
+  activeBg:       C.secondary50,
+  inactiveBorder: N[200],
+  titleActive:    C.secondary,
+  titleInactive:  C.primaryDark,
+  desc:           N[500],
+  iconActiveBg:   C.white,
+  iconInactiveBg: N[100],
+  iconActive:     C.secondary,
+  iconInactive:   N[600],
 };
 
 const ADICIONALES_ITEMS = [
@@ -348,7 +352,7 @@ function CompletenessSection({ completeness, onSetCompleteness, partial, onSetPa
           >
             {!isPartial && (
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                <path d="M2 5.5L4.5 8L9 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 5.5L4.5 8L9 3" stroke={C.white} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             )}
             Sí, completo
@@ -411,7 +415,7 @@ function InvoiceRow({ invoice, onToggle, onSetCompleteness, onSetPartial }) {
         }}>
           {checked && (
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-              <path d="M2 5.5L4.5 8L9 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 5.5L4.5 8L9 3" stroke={C.white} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           )}
         </div>
@@ -455,7 +459,7 @@ function InvoiceRow({ invoice, onToggle, onSetCompleteness, onSetPartial }) {
           </p>
           <p style={{
             /* DS caption (12px) — 11px has no DS token */
-            ...TYP.caption, color: C.gray400, margin: '3px 0 0', letterSpacing: '0.04em',
+            ...TYP.caption, color: C.gray400, margin: `${SP.xxs} 0 0`, letterSpacing: '0.04em',
           }}>
             {incoterm}
           </p>
@@ -540,7 +544,7 @@ function CoverageSelector({ selected, onChange }) {
               padding: `${SP.md} ${SP.ms} ${SP.ms}`,
               border: `${isSelected ? 2 : 1}px solid ${isSelected ? DST.activeBorder : DST.inactiveBorder}`,
               borderRadius: BR.sm,
-              background: isSelected ? DST.activeBg : '#FFFFFF',
+              background: isSelected ? DST.activeBg : C.white,
               cursor: 'pointer',
               transition: 'border-color 0.15s ease, background 0.15s ease',
               gap: SP.xs /* SP.xs (8px) — 10px has no DS token */,
@@ -765,7 +769,7 @@ function ContenedorAsegurar({ checked, onToggle }) {
         }}>
           {CONTAINER.number}
         </p>
-        <p style={{ ...TYP.caption, color: C.gray400, margin: '2px 0 0' }}>
+        <p style={{ ...TYP.caption, color: C.gray400, margin: `${SP.xxs} 0 0` }}>
           {CONTAINER.line} · {CONTAINER.size}
         </p>
       </div>
@@ -867,12 +871,12 @@ function CoberturasAdicionales({ coberturas, setCoberturas }) {
                     <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
                       {cov.label}
                     </p>
-                    <p style={{ fontFamily: FONT, fontSize: 11, color: C.gray400, margin: '2px 0 0' }}>
+                    <p style={{ fontFamily: FONT, fontSize: 11, color: C.gray400, margin: `${SP.xxs} 0 0` }}>
                       {cov.description}
                     </p>
                   </div>
                   <span style={{
-                    background: '#EBF5E8', color: C.successDark,
+                    background: C.bannerBg, color: C.successDark,
                     borderRadius: 20, padding: '3px 8px',
                     fontFamily: FONT, fontSize: 11, fontWeight: 600,
                     whiteSpace: 'nowrap', flexShrink: 0,
@@ -897,7 +901,7 @@ function CoberturasAdicionales({ coberturas, setCoberturas }) {
                   <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: C.gray300, margin: 0 }}>
                     {cov.label}
                   </p>
-                  <p style={{ fontFamily: FONT, fontSize: 11, color: C.gray300, margin: '2px 0 0' }}>
+                  <p style={{ fontFamily: FONT, fontSize: 11, color: C.gray300, margin: `${SP.xxs} 0 0` }}>
                     {cov.note}
                   </p>
                 </div>
@@ -923,7 +927,7 @@ function ResumenCosto({ prima, iva, total }) {
         <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.55)', margin: '0 0 4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           Prima base (0.35%)
         </p>
-        <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: '#FFF', margin: 0 }}>
+        <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: C.white, margin: 0 }}>
           USD {fmt(prima)}
         </p>
       </div>
@@ -932,7 +936,7 @@ function ResumenCosto({ prima, iva, total }) {
         <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.55)', margin: '0 0 4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           IVA (19%)
         </p>
-        <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: '#FFF', margin: 0 }}>
+        <p style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: C.white, margin: 0 }}>
           USD {fmt(iva)}
         </p>
       </div>
@@ -941,7 +945,7 @@ function ResumenCosto({ prima, iva, total }) {
         <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.55)', margin: '0 0 4px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           Total póliza
         </p>
-        <p style={{ fontFamily: FONT, fontSize: 24, fontWeight: 800, color: '#FFF', margin: 0 }}>
+        <p style={{ fontFamily: FONT, fontSize: 24, fontWeight: 800, color: C.white, margin: 0 }}>
           USD {fmt(total)}
         </p>
       </div>
@@ -1086,15 +1090,15 @@ function SuccessScreen({ onListo }) {
         width: 96, height: 96,
         /* No DS token for circular radius — '50%' is the correct CSS for circles */
         borderRadius: '50%',
-        background: '#E0F7E6',           // DS success.ultraLight
-        border: '3px solid #AAEAA8',     // DS success.light
+        background: C.bannerBg,
+        border: `3px solid ${C.successLight}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         marginBottom: 28, flexShrink: 0,
       }}>
         <svg width="46" height="46" viewBox="0 0 46 46" fill="none" aria-hidden="true">
           <path
             d="M11 23L19.5 31.5L35 15"
-            stroke="#03593A"             // DS success.dark
+            stroke={C.successDark}       // DS success.dark
             strokeWidth="3.8"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -1103,7 +1107,7 @@ function SuccessScreen({ onListo }) {
       </div>
 
       {/* Título — DS typography.h2 (20px · 600 · 1.4) */}
-      <p style={{ ...TYP.h2, color: '#060735', margin: `0 0 ${SP.xs}` }}>
+      <p style={{ ...TYP.h2, color: C.primaryDark, margin: `0 0 ${SP.xs}` }}>
         ¡Tu mercancía está protegida! ✓
       </p>
 
@@ -1129,74 +1133,69 @@ function InvoiceCard({ invoice, onUpdate }) {
   const showAlert   = invoice.enabled && invoice.valueMode === 'partial' && partial > 0 && partial < threshold80;
 
   const radioOptions = [
-    { value: 'complete', label: `Valor completo — USD ${fmt(invoice.amount)}` },
-    { value: 'partial',  label: 'Solo una parte — ingresa el monto que quieres asegurar' },
+    { value: 'complete', label: `Todo el valor — USD ${fmt(invoice.amount)}` },
+    { value: 'partial',  label: 'Solo una parte' },
   ];
 
   return (
-    <div style={{
-      background: '#FFFFFF', borderRadius: BR.sm,
-      border: `1px solid ${N[200]}`,
-      padding: SP.md,
-      display: 'flex', flexDirection: 'column', gap: SP.sm,
-    }}>
-      {/* Header row: info + amount + DS Toggle */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: SP.ms }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: `0 0 2px`, ...TYP.labelMd, color: '#060735' }}>
-            {invoice.number}
-          </p>
-          <p style={{ margin: 0, ...TYP.body2, color: N[500] }}>
-            {invoice.description}
-          </p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: SP.sm, flexShrink: 0, paddingTop: 2 }}>
-          <span style={{
-            ...TYP.labelMd, color: '#060735',
-            opacity: invoice.enabled ? 1 : 0.4, transition: 'opacity 0.15s',
-          }}>
-            USD {fmt(invoice.amount)}
-          </span>
-          {/* DS Toggle component */}
+    <div style={{ padding: SP.md }}>
+      {/* Main row: Toggle + number/description + amount/incoterm */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: SP.sm }}>
+        <div style={{ flexShrink: 0 }}>
           <Toggle
             checked={invoice.enabled}
             size="small"
             onChange={checked => onUpdate({ ...invoice, enabled: checked, valueMode: 'complete', partialValue: '' })}
           />
         </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ ...TYP.labelMd, color: C.primaryDark, margin: 0 }}>
+            {invoice.number}
+          </p>
+          <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
+            {invoice.description}
+          </p>
+        </div>
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
+          gap: SP.xxs, flexShrink: 0,
+          opacity: invoice.enabled ? 1 : 0.4, transition: 'opacity 0.15s',
+        }}>
+          <span style={{ ...TYP.labelMd, color: C.primaryDark }}>
+            USD {fmt(invoice.amount)}
+          </span>
+          <Badge label={invoice.incoterm} variant="neutral" size="small" badgeStyle="light" border={true} />
+        </div>
       </div>
 
-      {/* DS RadioGroup — visible solo cuando toggle está encendido */}
+      {/* RadioGroup + Input + Alert — visible when toggle ON */}
       {invoice.enabled && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: SP.sm, paddingTop: SP.xxs }}>
-          <p style={{ ...TYP.labelMd, color: N[700], margin: 0 }}>
-            ¿Qué quieres asegurar de esta factura?
-          </p>
+        <div style={{ paddingTop: SP.sm, paddingLeft: '46px' }}>
           <RadioGroup
             name={`invoice-value-mode-${invoice.id}`}
             options={radioOptions}
             value={invoice.valueMode}
             onChange={mode => onUpdate({ ...invoice, valueMode: mode, partialValue: '' })}
           />
-
-          {/* DS Input — visible cuando opción B está seleccionada */}
           {invoice.valueMode === 'partial' && (
-            <Input
-              label="Ingresa el valor a asegurar"
-              placeholder="Ingresa el valor a asegurar"
-              type="number"
-              value={invoice.partialValue}
-              onChange={e => onUpdate({ ...invoice, partialValue: e.target.value })}
-            />
+            <div style={{ marginTop: SP.sm }}>
+              <Input
+                label="¿Cuánto quieres asegurar?"
+                placeholder="¿Cuánto quieres asegurar?"
+                type="number"
+                value={invoice.partialValue}
+                onChange={e => onUpdate({ ...invoice, partialValue: e.target.value })}
+              />
+            </div>
           )}
-
-          {/* DS Alert — visible cuando valor es menor al 80% */}
           {showAlert && (
-            <Alert
-              variant="warning"
-              alertStyle="border"
-              title="Asegurar menos del valor total puede dejar parte de tu mercancía sin cobertura en caso de siniestro total."
-            />
+            <div style={{ marginTop: SP.sm }}>
+              <Alert
+                variant="warning"
+                alertStyle="border"
+                title="Asegurar menos del valor total puede dejar parte de tu mercancía sin cobertura en caso de siniestro total."
+              />
+            </div>
           )}
         </div>
       )}
@@ -1211,7 +1210,7 @@ function ResumenRow({ label, value, bold }) {
       <span style={{
         /* bold: DS labelMd (14px·600); non-bold: DS body2 (14px·400) — 13px has no DS token */
         ...(bold ? TYP.labelMd : TYP.body2),
-        color: bold ? '#060735' : N[500],
+        color: bold ? C.primaryDark : N[500],
       }}>
         {label}
       </span>
@@ -1219,7 +1218,7 @@ function ResumenRow({ label, value, bold }) {
         /* bold: DS labelLg (16px·600) — 15px has no DS token; non-bold: DS body2 + medium weight */
         ...(bold ? TYP.labelLg : { ...TYP.body2, fontWeight: 500 }),
         /* DS labelLg (16px) — 15px has no DS token */
-        color: bold ? '#060735' : N[700],
+        color: bold ? C.primaryDark : N[700],
         whiteSpace: 'nowrap',
       }}>
         {value}
@@ -1228,14 +1227,16 @@ function ResumenRow({ label, value, bold }) {
   );
 }
 
-function ResumenPanel({ totalInsured, contenedoresCost = 0, prima, iva, total }) {
-  const fmt = n => n.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function ResumenPanel({ selectedOptions, invTotal, contenedoresChecked, prima, iva, total }) {
+  const fmt    = n => n.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtInt = n => n.toLocaleString('es-CO', { minimumFractionDigits: 0 });
+  const contCost = CONTAINERS_DATA
+    .filter(c => contenedoresChecked[c.id])
+    .reduce((sum, c) => sum + c.pricePerCert, 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
       <p style={{
-        /* DS caption (12px) — 11px has no DS token */
         ...TYP.caption, fontWeight: 700,
         letterSpacing: '0.08em', textTransform: 'uppercase',
         color: N[500], margin: `0 0 ${SP.md}`,
@@ -1243,21 +1244,28 @@ function ResumenPanel({ totalInsured, contenedoresCost = 0, prima, iva, total })
         Resumen de cobertura
       </p>
 
-      <ResumenRow label="Valor asegurado total" value={`USD ${fmtInt(totalInsured)}`} bold />
-
-      <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: SP.xs /* SP.xs (8px) — 10px has no DS token */ }}>
-        <ResumenRow label="Prima base (0.35%)" value={`USD ${fmt(prima)}`} />
-        {contenedoresCost > 0 && (
-          <ResumenRow label="Contenedores" value={`+USD ${fmt(contenedoresCost)}`} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: SP.xs }}>
+        {selectedOptions.mercancia && invTotal > 0 && (
+          <ResumenRow label="Valor asegurado mercancía" value={`USD ${fmtInt(invTotal)}`} />
         )}
-        <ResumenRow label="IVA (19%)"           value={`USD ${fmt(iva)}`} />
+        {selectedOptions.contenedor && contCost > 0 && (
+          <ResumenRow label="Valor asegurado contenedor(es)" value={`+USD ${fmtInt(contCost)}`} />
+        )}
       </div>
 
       <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
 
-      <ResumenRow label="Total póliza" value={`USD ${fmt(total)}`} bold />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: SP.xs }}>
+        <ResumenRow label="Prima base (0.35%)" value={`USD ${fmt(prima)}`} />
+        <ResumenRow label="IVA (19%)"          value={`USD ${fmt(iva)}`} />
+      </div>
+
+      <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <span style={{ ...TYP.labelMd, color: C.primaryDark }}>Total póliza</span>
+        <span style={{ ...TYP.h2, color: C.primaryDark }}>USD {fmt(total)}</span>
+      </div>
 
       <p style={{
         ...TYP.caption, color: N[400],
@@ -1270,128 +1278,182 @@ function ResumenPanel({ totalInsured, contenedoresCost = 0, prima, iva, total })
 }
 
 // ─── Step 2 — Main layout ─────────────────────────────────────────────────────
-function Step2({ invoices, onUpdateInvoice, contenedoresChecked, setContenedoresChecked }) {
-  const isMultiple = CONTAINERS_DATA.length > 1;
 
-  const totalInsured = invoices.reduce((acc, inv) => {
+const MERCH_CHIPS = [
+  'Pérdida total o robo', 'Daños por accidente',
+  'Saqueo y actos de terceros', 'Avería gruesa', 'Operaciones en puerto y bodegas',
+];
+const CONT_CHIPS = [
+  'Daños físicos al contenedor', 'Limpieza ordinaria y extraordinaria', 'Sin deducible en pérdida total',
+];
+
+function Step2({ invoices, onUpdateInvoice, contenedoresChecked, setContenedoresChecked }) {
+  const [expandedInfo, setExpandedInfo] = useState({ mercancia: false, contenedor: false });
+
+  const invTotal = invoices.reduce((acc, inv) => {
     if (!inv.enabled) return acc;
     return acc + (inv.valueMode === 'complete' ? inv.amount : (parseFloat(inv.partialValue) || 0));
   }, 0);
   const contenedoresCost = CONTAINERS_DATA
     .filter(c => contenedoresChecked[c.id])
     .reduce((sum, c) => sum + c.pricePerCert, 0);
-  const prima = totalInsured * 0.0035;
+  const prima = invTotal * 0.0035;
   const iva   = (prima + contenedoresCost) * 0.19;
   const total = prima + contenedoresCost + iva;
 
-  const SectionLabel = ({ children }) => (
-    <p style={{
-      /* DS caption (12px) — 11px has no DS token */
-      ...TYP.caption, fontWeight: 700,
-      letterSpacing: '0.08em', textTransform: 'uppercase',
-      color: N[500], margin: 0,
-    }}>
-      {children}
-    </p>
+  const fmtInt          = n => n.toLocaleString('es-CO', { minimumFractionDigits: 0 });
+  const anyInvoiceOn    = invoices.some(inv => inv.enabled);
+  const anyContenedorOn = CONTAINERS_DATA.some(c => contenedoresChecked[c.id]);
+  const showDualAlert   = anyInvoiceOn && anyContenedorOn;
+
+  const chevron = (open) => (
+    <svg
+      width="12" height="12" viewBox="0 0 12 12" fill="none"
+      style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', flexShrink: 0 }}
+    >
+      <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
   );
 
   return (
     <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-      {/* ── Columna izquierda: contenido principal ── */}
+      {/* ── Columna izquierda ── */}
       <div style={{
-        flex: 1, overflowY: 'auto',
+        flex: 1, minHeight: 0, overflowY: 'auto',
         padding: `${SP.xl} 28px ${SP.xl} ${SP.xl}`,
-        display: 'flex', flexDirection: 'column', gap: 28,
-        background: N[50],  // DS neutral.50
+        display: 'flex', flexDirection: 'column', gap: SP.lg,
+        background: N[50],
       }}>
 
-        {/* Sección: Facturas */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: SP.sm }}>
-          <p style={{ ...TYP.h3, color: N[700], margin: 0 }}>
-            Selecciona las facturas que quieres asegurar
+        {/* ── Card A: Mi mercancía ── */}
+        <div style={{ background: C.white, borderRadius: BR.sm, border: `1px solid ${N[200]}` }}>
+
+          {/* Header */}
+          <div style={{ padding: SP.md }}>
+            <p style={{ ...TYP.labelMd, color: C.primaryDark, margin: `0 0 ${SP.xxs}` }}>
+              Mi mercancía
+            </p>
+            <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
+              Protege el valor de tu carga contra pérdida total, robo, saqueo, daños por accidente y averías durante todo el tránsito.
+            </p>
+          </div>
+
+          {/* Separador header → contenido (token N[200]) */}
+          <Divider />
+
+          {/* Label de sección */}
+          <p style={{
+            ...TYP.caption, fontWeight: 700,
+            letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: N[500], margin: 0, padding: `${SP.xs} ${SP.md}`,
+          }}>
+            Facturas incluidas en esta cobertura
           </p>
-          <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
-            Todas están activas por defecto. Desactiva las que no quieras incluir y elige si aseguras el valor completo o solo una parte.
-          </p>
-          {invoices.map(inv => (
-            <InvoiceCard
-              key={inv.id}
-              invoice={inv}
-              onUpdate={updated => onUpdateInvoice(inv.id, updated)}
-            />
+
+          {/* Filas de facturas */}
+          {invoices.map((inv, idx) => (
+            <div key={inv.id}>
+              <div style={{ height: 1, background: N[200] }} />
+              <InvoiceCard
+                invoice={inv}
+                onUpdate={updated => onUpdateInvoice(inv.id, updated)}
+              />
+            </div>
           ))}
-        </section>
 
-        {/* Sección: Contenedor(es) — DS Toggle */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: SP.sm }}>
-          <p style={{ ...TYP.h3, color: N[700], margin: 0 }}>
-            {isMultiple ? '¿Quieres asegurar tus contenedores?' : '¿Quieres asegurar tu contenedor?'}
-          </p>
-          <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
-            {isMultiple
-              ? `Encontramos ${CONTAINERS_DATA.length} contenedores en tránsito. Activa los que quieras incluir en tu cobertura.`
-              : `Encontramos que tienes el contenedor ${CONTAINERS_DATA[0].number} en tránsito. Actívalo si quieres incluirlo en tu cobertura.`
-            }
+          {/* Fila total */}
+          <div style={{ height: 1, background: N[200] }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: SP.md }}>
+            <span style={{ ...TYP.body2, color: N[500] }}>Total mercancía seleccionada</span>
+            <span style={{ ...TYP.labelMd, color: C.primaryDark }}>USD {fmtInt(invTotal)}</span>
+          </div>
+        </div>
+
+        {/* ── Card B: El contenedor ── */}
+        <div style={{ background: C.white, borderRadius: BR.sm, border: `1px solid ${N[200]}` }}>
+
+          {/* Header */}
+          <div style={{ padding: SP.md }}>
+            <p style={{ ...TYP.labelMd, color: C.primaryDark, margin: `0 0 ${SP.xxs}` }}>
+              El contenedor
+            </p>
+            <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
+              Cubre los daños físicos, golpes y costos de limpieza que la naviera te pueda cobrar si el contenedor regresa en mal estado. Genera un certificado independiente al de tu mercancía.
+            </p>
+          </div>
+
+          {/* Separador header → contenido (token N[200]) */}
+          <Divider />
+
+          {/* Label de sección */}
+          <p style={{
+            ...TYP.caption, fontWeight: 700,
+            letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: N[500], margin: 0, padding: `${SP.xs} ${SP.md}`,
+          }}>
+            Contenedores encontrados en tu BL
           </p>
 
-          {isMultiple ? (
-            /* Lista de toggles — uno por contenedor */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SP.xs }}>
-              {CONTAINERS_DATA.map(c => (
-                <div key={c.id} style={{
-                  background: '#FFFFFF', borderRadius: BR.sm,
-                  border: `1px solid ${N[200]}`, padding: SP.md,
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: SP.ms,
-                }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ ...TYP.labelMd, color: '#060735', margin: 0 }}>
-                      {c.number}
-                    </p>
-                    <p style={{ margin: 0, ...TYP.body2, color: N[500] }}>
-                      {c.line} · {c.size} · extraído del BL
-                    </p>
-                  </div>
+          {/* Filas de contenedores */}
+          {CONTAINERS_DATA.map((c, idx) => (
+            <div key={c.id}>
+              <div style={{ height: 1, background: N[200] }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: SP.sm, padding: SP.md }}>
+                <div style={{ flexShrink: 0 }}>
                   <Toggle
                     checked={contenedoresChecked[c.id]}
                     size="small"
                     onChange={checked => setContenedoresChecked(prev => ({ ...prev, [c.id]: checked }))}
                   />
                 </div>
-              ))}
-            </div>
-          ) : (
-            /* Toggle único — comportamiento original */
-            <div style={{
-              background: '#FFFFFF', borderRadius: BR.sm,
-              border: `1px solid ${N[200]}`, padding: SP.md,
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: SP.ms,
-            }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ ...TYP.labelMd, color: '#060735', margin: 0 }}>
-                  Asegurar este contenedor
-                </p>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ ...TYP.labelMd, color: C.primaryDark, margin: 0 }}>{c.number}</p>
+                  <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>{c.line} · {c.size}</p>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: SP.xs, flexShrink: 0 }}>
+                  <Badge label="Del BL" variant="neutral" size="small" badgeStyle="light" border={true} />
+                  <span style={{
+                    ...TYP.caption, fontWeight: 600, color: C.successDark,
+                    background: C.bannerBg, borderRadius: BR.md, padding: `3px ${SP.xs}`,
+                    whiteSpace: 'nowrap',
+                  }}>
+                    +USD {c.pricePerCert} / cert.
+                  </span>
+                </div>
               </div>
-              <Toggle
-                checked={contenedoresChecked[CONTAINERS_DATA[0].id]}
-                size="small"
-                onChange={checked => setContenedoresChecked(prev => ({ ...prev, [CONTAINERS_DATA[0].id]: checked }))}
-              />
             </div>
-          )}
-        </section>
+          ))}
+        </div>
+
+        {/* Alert — ambas coberturas activas al mismo tiempo */}
+        {showDualAlert && (
+          <Alert
+            variant="info"
+            alertStyle="border"
+            title="Contratarás dos coberturas independientes"
+            description="Recibirás un certificado para tu mercancía y otro para el contenedor. Cubren riesgos distintos y puedes reclamar cada uno por separado."
+          />
+        )}
+
       </div>
 
-      {/* ── Columna derecha: Resumen persistente ── */}
+      {/* ── Columna derecha: Resumen ── */}
       <div style={{
-        width: 288,
+        width: 288, minHeight: 0, flexShrink: 0,
         borderLeft: `1px solid ${N[200]}`,
-        background: '#FFFFFF',
+        background: C.white,
         overflowY: 'auto',
         padding: `${SP.xl} ${SP.lg}`,
-        flexShrink: 0,
       }}>
-        <ResumenPanel totalInsured={totalInsured} contenedoresCost={contenedoresCost} prima={prima} iva={iva} total={total} />
+        <ResumenPanel
+          selectedOptions={{ mercancia: true, contenedor: true }}
+          invTotal={invTotal}
+          contenedoresChecked={contenedoresChecked}
+          prima={prima}
+          iva={iva}
+          total={total}
+        />
       </div>
     </div>
   );
@@ -1407,7 +1469,7 @@ function CoverageToggleRow({ cov, enabled, onToggle, disabled = false }) {
       <div style={{ flex: 1 }}>
         <p style={{
           ...TYP.labelMd,
-          color: disabled ? N[400] : '#060735', margin: 0,
+          color: disabled ? N[400] : C.primaryDark, margin: 0,
         }}>
           {cov.label}
         </p>
@@ -1416,16 +1478,16 @@ function CoverageToggleRow({ cov, enabled, onToggle, disabled = false }) {
             /* DS body2 (14px) — 13px has no DS token */
             /* disabled: N[400] = tertiary text token (neutral[400]) */
             ...TYP.body2, color: disabled ? N[400] : N[500],
-            margin: '3px 0 0',
+            margin: `${SP.xxs} 0 0`,
           }}>
             {cov.description}
           </p>
         )}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: SP.sm, flexShrink: 0, paddingTop: 2 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: SP.sm, flexShrink: 0 }}>
         <span style={{
-          background: disabled ? N[100] : '#E0F7E6',
-          color: disabled ? N[400] : '#03593A',
+          background: disabled ? N[100] : C.bannerBg,
+          color: disabled ? N[400] : C.successDark,
           borderRadius: BR.md, padding: `3px ${SP.xs}`,
           ...TYP.caption, fontWeight: 600, whiteSpace: 'nowrap',
         }}>
@@ -1559,7 +1621,7 @@ function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas,
 
       {/* ── Columna izquierda ── */}
       <div style={{
-        flex: 1, overflowY: 'auto',
+        flex: 1, minHeight: 0, overflowY: 'auto',
         padding: `${SP.xl} 28px ${SP.xl} ${SP.xl}`,
         display: 'flex', flexDirection: 'column', gap: SP.lg,
         background: N[50],
@@ -1576,7 +1638,7 @@ function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas,
           </p>
           {/* Tarjeta agrupadora — DS borderRadius + neutral.50 surface */}
           <div style={{
-            background: '#FFFFFF',
+            background: C.white,
             borderRadius: BR.sm,
             border: `1px solid ${N[200]}`,
             padding: SP.md,
@@ -1611,7 +1673,7 @@ function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas,
 
           {/* Tarjeta agrupadora */}
           <div style={{
-            background: '#FFFFFF',
+            background: C.white,
             borderRadius: BR.sm,
             border: `1px solid ${N[200]}`,
             padding: `0 ${SP.lg}`,
@@ -1649,9 +1711,9 @@ function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas,
 
       {/* ── Columna derecha: Resumen persistente ── */}
       <div style={{
-        width: 288,
+        width: 288, minHeight: 0,
         borderLeft: `1px solid ${N[200]}`,
-        background: '#FFFFFF',
+        background: C.white,
         overflowY: 'auto',
         padding: `${SP.xl} ${SP.lg}`,
         flexShrink: 0,
@@ -1756,7 +1818,7 @@ function Step4({ invoices, flete, aranceles, adicCoberturas, shipmentData, setSh
 
       {/* ── Columna izquierda ── */}
       <div style={{
-        flex: 1, overflowY: 'auto',
+        flex: 1, minHeight: 0, overflowY: 'auto',
         padding: `${SP.xl} 28px ${SP.xl} ${SP.xl}`,
         display: 'flex', flexDirection: 'column', gap: SP.lg,
         background: N[50],
@@ -1787,7 +1849,7 @@ function Step4({ invoices, flete, aranceles, adicCoberturas, shipmentData, setSh
 
         {/* Grid de campos — tarjeta agrupadora */}
         <div style={{
-          background: '#FFFFFF',
+          background: C.white,
           borderRadius: BR.sm,
           border: `1px solid ${N[200]}`,
           padding: SP.lg,
@@ -1871,9 +1933,9 @@ function Step4({ invoices, flete, aranceles, adicCoberturas, shipmentData, setSh
 
       {/* ── Columna derecha: Resumen persistente ── */}
       <div style={{
-        width: 288,
+        width: 288, minHeight: 0,
         borderLeft: `1px solid ${N[200]}`,
-        background: '#FFFFFF',
+        background: C.white,
         overflowY: 'auto',
         padding: `${SP.xl} ${SP.lg}`,
         flexShrink: 0,
@@ -1965,14 +2027,14 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
 
         {/* ── Columna izquierda: resumen de lo contratado ── */}
         <div style={{
-          background: '#FFFFFF',
+          background: C.white,
           borderRadius: BR.sm,
           border: `1px solid ${C.gray200}`,
           overflow: 'hidden',
         }}>
           {/* Card header */}
-          <div style={{ padding: `18px ${SP.lg}`, borderBottom: `1px solid ${C.gray200}` }}>
-            <p style={{ ...TYP.labelLg, color: '#060735', margin: 0 }}>Resumen de cobertura</p>
+          <div style={{ padding: `${SP.ms} ${SP.lg}`, borderBottom: `1px solid ${C.gray200}` }}>
+            <p style={{ ...TYP.labelLg, color: C.primaryDark, margin: 0 }}>Resumen de cobertura</p>
           </div>
 
           <div style={{ padding: `0 ${SP.lg} ${SP.xs}` }}>
@@ -2008,11 +2070,11 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ ...TYP.labelMd, color: N[700], margin: 0 }}>{inv.number}</p>
-                    <p style={{ ...TYP.caption, color: N[400], margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ ...TYP.caption, color: N[400], margin: `${SP.xxs} 0 0`, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {inv.description}
                     </p>
                   </div>
-                  <p style={{ ...TYP.labelMd, color: '#060735', margin: 0, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  <p style={{ ...TYP.labelMd, color: C.primaryDark, margin: 0, whiteSpace: 'nowrap', flexShrink: 0 }}>
                     USD {fmtInt(val)}
                   </p>
                 </div>
@@ -2044,14 +2106,14 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
                   <SummaryRow
                     topBorder={false}
                     label="Flete"
-                    valueNode={<p style={{ ...TYP.labelMd, color: '#060735', margin: 0 }}>USD {fmtInt(fleteVal)}</p>}
+                    valueNode={<p style={{ ...TYP.labelMd, color: C.primaryDark, margin: 0 }}>USD {fmtInt(fleteVal)}</p>}
                   />
                 )}
                 {arancVal > 0 && (
                   <SummaryRow
                     topBorder={fleteVal > 0}
                     label="Aranceles / impuestos"
-                    valueNode={<p style={{ ...TYP.labelMd, color: '#060735', margin: 0 }}>USD {fmtInt(arancVal)}</p>}
+                    valueNode={<p style={{ ...TYP.labelMd, color: C.primaryDark, margin: 0 }}>USD {fmtInt(arancVal)}</p>}
                   />
                 )}
               </>
@@ -2086,7 +2148,7 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
               marginTop: SP.xxs,
             }}>
               <p style={{ ...TYP.labelMd, color: N[500], margin: 0 }}>Total asegurado</p>
-              <p style={{ ...TYP.h3, color: '#060735', margin: 0 }}>USD {fmtInt(totalInsured)}</p>
+              <p style={{ ...TYP.h3, color: C.primaryDark, margin: 0 }}>USD {fmtInt(totalInsured)}</p>
             </div>
 
           </div>
@@ -2094,14 +2156,14 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
 
         {/* ── Columna derecha: costo final ── */}
         <div style={{
-          background: '#FFFFFF',
+          background: C.white,
           borderRadius: BR.sm,
           border: `1px solid ${C.gray200}`,
           overflow: 'hidden',
         }}>
           {/* Card header */}
-          <div style={{ padding: `18px ${SP.lg}`, borderBottom: `1px solid ${C.gray200}` }}>
-            <p style={{ ...TYP.labelLg, color: '#060735', margin: 0 }}>Costo de la póliza</p>
+          <div style={{ padding: `${SP.ms} ${SP.lg}`, borderBottom: `1px solid ${C.gray200}` }}>
+            <p style={{ ...TYP.labelLg, color: C.primaryDark, margin: 0 }}>Costo de la póliza</p>
           </div>
 
           <div style={{ padding: SP.lg }}>
@@ -2152,17 +2214,17 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
 // ─── Step Bar ─────────────────────────────────────────────────────────────────
 // Colors mapeados desde tokens del design system (tokens.ts)
 const DS_STEP = {
-  active:      '#3C47D3',  // secondary.main
-  done:        '#2CA14D',  // tokens.ts success.main
-  inactiveBg:  '#FFFFFF',  // white
-  inactiveBdr: N[200],     // neutral[200]
-  labelActive: '#3C47D3',  // secondary.main
-  labelInact:  N[500],     // neutral[500]
-  white:       '#FFFFFF',
-  border:      N[200],     // neutral[200] — separador
+  active:      C.secondary,
+  done:        C.successMain,
+  inactiveBg:  C.white,
+  inactiveBdr: N[200],
+  labelActive: C.secondary,
+  labelInact:  N[500],
+  white:       C.white,
+  border:      N[200],
 };
 
-const WIZARD_STEPS = ['Cobertura', 'Mercancía', 'Adicionales', 'Datos', 'Resumen'];
+const WIZARD_STEPS = ['Cobertura', '¿Qué asegurar?', 'Adicionales', 'Datos', 'Resumen'];
 const CIRCLE_SIZE  = 28; // px
 const CONNECTOR_TOP = CIRCLE_SIZE / 2; // 14px — alinea al centro del círculo
 
@@ -2172,7 +2234,7 @@ function StepBar({ activeStep }) {
       display: 'flex', alignItems: 'flex-start',
       padding: `${SP.ms} ${SP.xl} ${SP.sm}`,
       borderBottom: `1px solid ${DS_STEP.border}`,
-      flexShrink: 0, background: '#FFFFFF',
+      flexShrink: 0, background: C.white,
     }}>
       {WIZARD_STEPS.map((label, i) => {
         const num      = i + 1;
@@ -2235,7 +2297,7 @@ function StepBar({ activeStep }) {
 
             {/* Etiqueta */}
             <span style={{
-              marginTop: 6,
+              marginTop: SP.xxs,
               ...TYP.caption,
               fontWeight: isActive ? 600 : 400,  // DS semibold / regular
               color: isActive ? DS_STEP.labelActive : DS_STEP.labelInact,
@@ -2255,7 +2317,7 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
   const [coverage, setCoverage]             = useState(null);
   const [invoices, setInvoices]             = useState(INVOICES_INIT);
   const [contenedoresChecked, setContenedoresChecked] = useState(
-    () => Object.fromEntries(CONTAINERS_DATA.map(c => [c.id, false]))
+    () => Object.fromEntries(CONTAINERS_DATA.map(c => [c.id, true]))
   );
   const [flete, setFlete]                   = useState('');
   const [aranceles, setAranceles]           = useState('');
@@ -2299,7 +2361,7 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
         flexShrink: 0, background: C.white,
       }}>
         <button onClick={handleClose} style={{
-          display: 'flex', alignItems: 'center', gap: 6,
+          display: 'flex', alignItems: 'center', gap: SP.xxs,
           background: 'transparent', border: 'none',
           /* DS body2 with medium weight */
           ...TYP.body2, fontWeight: 500,
@@ -2316,10 +2378,10 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
             <ShieldModalIcon />
           </div>
           <div>
-            <p style={{ ...TYP.labelLg, fontWeight: 700, color: C.primary, margin: 0 }}>
+            <p style={{ ...TYP.labelLg, color: C.primary, margin: 0 }}>
               Protege tu mercancía
             </p>
-            <p style={{ ...TYP.caption, color: C.gray400, margin: '2px 0 0' }}>
+            <p style={{ ...TYP.caption, color: C.gray400, margin: `${SP.xxs} 0 0` }}>
               Configura los detalles de tu póliza
             </p>
           </div>
@@ -2490,8 +2552,8 @@ function ShieldModalIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
       <path d="M10 2L17 5.5V10.5C17 14.2 13.9 17.6 10 18.5C6.1 17.6 3 14.2 3 10.5V5.5L10 2Z"
-            fill="none" stroke="#03593A" strokeWidth="1.5" strokeLinejoin="round"/>
-      <path d="M7 10l2 2 4-4" stroke="#03593A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            fill="none" stroke={C.successDark} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M7 10l2 2 4-4" stroke={C.successDark} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -2499,10 +2561,10 @@ function ShieldModalIcon() {
 function CalendarCheckIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <rect x="2" y="3" width="14" height="13" rx="2" stroke="#03593A" strokeWidth="1.4"/>
-      <path d="M2 7h14" stroke="#03593A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M6 1v3M12 1v3" stroke="#03593A" strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M6 11l2 2 4-3.5" stroke="#03593A" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+      <rect x="2" y="3" width="14" height="13" rx="2" stroke={C.successDark} strokeWidth="1.4"/>
+      <path d="M2 7h14" stroke={C.successDark} strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M6 1v3M12 1v3" stroke={C.successDark} strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M6 11l2 2 4-3.5" stroke={C.successDark} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -2511,8 +2573,8 @@ function ShieldSmallIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
       <path d="M7.5 1.5L13 4.5V8.5C13 11.5 10.5 14 7.5 14.5C4.5 14 2 11.5 2 8.5V4.5L7.5 1.5Z"
-            fill="none" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/>
-      <path d="M5 7.5l2 2 3.5-3.5" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            fill="none" stroke={C.white} strokeWidth="1.4" strokeLinejoin="round"/>
+      <path d="M5 7.5l2 2 3.5-3.5" stroke={C.white} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
