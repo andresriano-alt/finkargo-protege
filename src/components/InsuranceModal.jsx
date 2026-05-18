@@ -108,8 +108,8 @@ const CONTAINERS_DATA = [
 ];
 
 const STEP3_STANDARD = [
-  { key: 'lucro',  label: 'Lucro cesante',     description: 'Compensa las pérdidas económicas si tu mercancía sufre un siniestro', price: 18 },
-  { key: 'gastos', label: 'Gastos adicionales', description: 'Cubre costos de almacenaje y maniobras derivados de un siniestro',     price: 12 },
+  { key: 'lucro',  label: 'Lucro cesante',     description: 'Compensa las pérdidas económicas si tu carga sufre un siniestro. Activo por defecto.',    price: 18 },
+  { key: 'gastos', label: 'Gastos adicionales', description: 'Cubre costos imprevistos como reenvíos o almacenaje por demoras. Activo por defecto.', price: 12 },
 ];
 
 const STEP3_ADVANCED_MX = [
@@ -120,25 +120,25 @@ const STEP3_ADVANCED_MX = [
 const COVERAGE_OPTS = [
   {
     id: 'door-to-door',
-    label: 'Bodega a bodega',
+    label: 'De bodega a bodega — cubre todo el trayecto',
     description: 'Cobertura completa desde que tu mercancía sale del proveedor hasta que llega a tu bodega.',
-    tooltip: 'Cubre si tu carga se daña durante el transporte terrestre en el país de origen antes de llegar al puerto.',
+    tooltip: 'Con tu Incoterm FOB, el riesgo pasa a ti desde que la carga embarca. Esta opción te cubre desde ese momento hasta tu bodega.',
     recommended: true,
     icon: 'warehouse',
   },
   {
     id: 'origin-to-door',
-    label: 'Puerto de origen → tu bodega',
+    label: 'Desde que embarca — hasta tu bodega',
     description: 'Cobertura desde que tu mercancía es embarcada en origen hasta que llega a tu bodega.',
-    tooltip: 'Cubre si tu contenedor sufre daños durante la travesía marítima o el transporte terrestre en destino.',
+    tooltip: 'Cubre desde que tu carga sube al barco en origen hasta que llega a tu bodega de destino.',
     recommended: false,
     icon: 'ship',
   },
   {
     id: 'dest-to-door',
-    label: 'Puerto de destino → tu bodega',
+    label: 'Desde que llega al país — hasta tu bodega',
     description: 'Cobertura desde que tu mercancía llega al país hasta que llega a tu bodega.',
-    tooltip: 'Cubre si tu mercancía se daña durante el transporte terrestre desde el puerto hasta tu bodega.',
+    tooltip: 'Cubre el tramo terrestre desde el puerto de destino hasta tu bodega.',
     recommended: false,
     icon: 'truck',
   },
@@ -1108,18 +1108,25 @@ function SuccessScreen({ onListo }) {
 
       {/* Título — DS typography.h2 (20px · 600 · 1.4) */}
       <p style={{ ...TYP.h2, color: C.primaryDark, margin: `0 0 ${SP.xs}` }}>
-        ¡Tu mercancía está protegida! ✓
+        Carga protegida ✓
       </p>
 
       {/* Subtítulo — DS typography.body2 */}
       <p style={{ ...TYP.body2, color: N[500], margin: `0 0 ${SP.xl}` }}>
-        Certificado #VERT-2025-00847 · Vigente hasta 26 Oct 2025
+        Certificado #VERT-2025-00847 vigente hasta 26 oct 2025. Lo encontrarás en tus documentos
       </p>
 
       {/* Botón Listo — DS Button primary */}
       <Button variant="primary" size="medium" onClick={onListo}>
         Listo
       </Button>
+
+      <p style={{ ...TYP.body2, color: N[500], margin: `${SP.xl} 0 0`, maxWidth: 360 }}>
+        ¿Trabajas con un agente de carga o broker? Comparte Protege con ellos
+      </p>
+      <p style={{ ...TYP.body2, color: N[500], margin: `${SP.sm} 0 0`, maxWidth: 360 }}>
+        ¿Avisamos cuando llegue tu próxima importación?
+      </p>
 
     </div>
   );
@@ -1133,7 +1140,7 @@ function InvoiceCard({ invoice, onUpdate }) {
   const showAlert   = invoice.enabled && invoice.valueMode === 'partial' && partial > 0 && partial < threshold80;
 
   const radioOptions = [
-    { value: 'complete', label: `Todo el valor — USD ${fmt(invoice.amount)}` },
+    { value: 'complete', label: 'Valor completo' },
     { value: 'partial',  label: 'Solo una parte' },
   ];
 
@@ -1176,16 +1183,22 @@ function InvoiceCard({ invoice, onUpdate }) {
             options={radioOptions}
             value={invoice.valueMode}
             onChange={mode => onUpdate({ ...invoice, valueMode: mode, partialValue: '' })}
+            direction="horizontal"
           />
           {invoice.valueMode === 'partial' && (
             <div style={{ marginTop: SP.sm }}>
               <Input
                 label="¿Cuánto quieres asegurar?"
-                placeholder="¿Cuánto quieres asegurar?"
+                placeholder="USD 0.00"
                 type="number"
                 value={invoice.partialValue}
                 onChange={e => onUpdate({ ...invoice, partialValue: e.target.value })}
               />
+              {partial > 0 && (
+                <p style={{ ...TYP.caption, color: N[500], margin: `${SP.xxs} 0 0` }}>
+                  Asegurarás USD {partial.toLocaleString('es-CO', { minimumFractionDigits: 0 })} de los USD {fmt(invoice.amount)} de esta factura
+                </p>
+              )}
             </div>
           )}
           {showAlert && (
@@ -1193,7 +1206,7 @@ function InvoiceCard({ invoice, onUpdate }) {
               <Alert
                 variant="warning"
                 alertStyle="border"
-                title="Asegurar menos del valor total puede dejar parte de tu mercancía sin cobertura en caso de siniestro total."
+                title="Asegurar menos del valor total puede dejarte sin cobertura completa si ocurre un siniestro total"
               />
             </div>
           )}
@@ -1256,14 +1269,14 @@ function ResumenPanel({ selectedOptions, invTotal, contenedoresChecked, prima, i
       <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: SP.xs }}>
-        <ResumenRow label="Prima base (0.35%)" value={`USD ${fmt(prima)}`} />
-        <ResumenRow label="IVA (19%)"          value={`USD ${fmt(iva)}`} />
+        <ResumenRow label="Prima base" value={`USD ${fmt(prima)}`} />
+        <ResumenRow label="IVA"        value={`USD ${fmt(iva)}`} />
       </div>
 
       <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <span style={{ ...TYP.labelMd, color: C.primaryDark }}>Total póliza</span>
+        <span style={{ ...TYP.labelMd, color: C.primaryDark }}>Total con IVA incluido</span>
         <span style={{ ...TYP.h2, color: C.primaryDark }}>USD {fmt(total)}</span>
       </div>
 
@@ -1287,7 +1300,7 @@ const CONT_CHIPS = [
   'Daños físicos al contenedor', 'Limpieza ordinaria y extraordinaria', 'Sin deducible en pérdida total',
 ];
 
-function Step2({ invoices, onUpdateInvoice, contenedoresChecked, setContenedoresChecked }) {
+function Step2({ coverage, onCoverageChange, invoices, onUpdateInvoice, contenedoresChecked, setContenedoresChecked }) {
   const [expandedInfo, setExpandedInfo] = useState({ mercancia: false, contenedor: false });
 
   const invTotal = invoices.reduce((acc, inv) => {
@@ -1326,6 +1339,11 @@ function Step2({ invoices, onUpdateInvoice, contenedoresChecked, setContenedores
         background: N[50],
       }}>
 
+        {/* ── Alcance de cobertura ── */}
+        <Section title="¿Desde dónde quieres estar cubierto?">
+          <CoverageSelector selected={coverage} onChange={onCoverageChange} />
+        </Section>
+
         {/* ── Card A: Mi mercancía ── */}
         <div style={{ background: C.white, borderRadius: BR.sm, border: `1px solid ${N[200]}` }}>
 
@@ -1346,9 +1364,12 @@ function Step2({ invoices, onUpdateInvoice, contenedoresChecked, setContenedores
           <p style={{
             ...TYP.caption, fontWeight: 700,
             letterSpacing: '0.08em', textTransform: 'uppercase',
-            color: N[500], margin: 0, padding: `${SP.xs} ${SP.md}`,
+            color: N[500], margin: 0, padding: `${SP.xs} ${SP.md} 0`,
           }}>
-            Facturas incluidas en esta cobertura
+            ¿Qué quieres proteger?
+          </p>
+          <p style={{ ...TYP.caption, color: N[500], margin: 0, padding: `${SP.xxs} ${SP.md} ${SP.xs}` }}>
+            Extraído de tu factura comercial. Activa las que quieras incluir
           </p>
 
           {/* Filas de facturas */}
@@ -1376,10 +1397,10 @@ function Step2({ invoices, onUpdateInvoice, contenedoresChecked, setContenedores
           {/* Header */}
           <div style={{ padding: SP.md }}>
             <p style={{ ...TYP.labelMd, color: C.primaryDark, margin: `0 0 ${SP.xxs}` }}>
-              El contenedor
+              ¿Quieres cubrir también el contenedor?
             </p>
             <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
-              Cubre los daños físicos, golpes y costos de limpieza que la naviera te pueda cobrar si el contenedor regresa en mal estado. Genera un certificado independiente al de tu mercancía.
+              Cubre daños físicos, golpes y costos de limpieza que la naviera te pueda cobrar si el contenedor regresa en mal estado. Genera un certificado separado al de tu mercancía.
             </p>
           </div>
 
@@ -1431,8 +1452,7 @@ function Step2({ invoices, onUpdateInvoice, contenedoresChecked, setContenedores
           <Alert
             variant="info"
             alertStyle="border"
-            title="Contratarás dos coberturas independientes"
-            description="Recibirás un certificado para tu mercancía y otro para el contenedor. Cubren riesgos distintos y puedes reclamar cada uno por separado."
+            description="Recibirás dos certificados: uno para tu mercancía y otro para el contenedor."
           />
         )}
 
@@ -1582,14 +1602,14 @@ function ResumenPanelStep3({ baseInvoices, fleteVal, arancVal, prima, coberturas
       <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
 
       {/* Prima y coberturas */}
-      <ResumenRow label="Prima base (0.35%)" value={`USD ${fmt(prima)}`} />
+      <ResumenRow label="Prima base" value={`USD ${fmt(prima)}`} />
       {coberturas.lucro  && <ResumenRow label="Lucro cesante"      value="+USD 18.00" />}
       {coberturas.gastos && <ResumenRow label="Gastos adicionales" value="+USD 12.00" />}
-      <ResumenRow label="IVA (19%)" value={`USD ${fmt(iva)}`} />
+      <ResumenRow label="IVA" value={`USD ${fmt(iva)}`} />
 
       <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
 
-      <ResumenRow label="Total póliza" value={`USD ${fmt(total)}`} bold />
+      <ResumenRow label="Total con IVA incluido" value={`USD ${fmt(total)}`} bold />
 
       <p style={{
         ...TYP.caption, color: N[400],
@@ -1602,7 +1622,7 @@ function ResumenPanelStep3({ baseInvoices, fleteVal, arancVal, prima, coberturas
 }
 
 // ─── Step 3 — Main layout ─────────────────────────────────────────────────────
-function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas, setCoberturas }) {
+function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas, setCoberturas, paisDestino }) {
   const baseInvoices = invoices.reduce((acc, inv) => {
     if (!inv.enabled) return acc;
     return acc + (inv.valueMode === 'complete' ? inv.amount : (parseFloat(inv.partialValue) || 0));
@@ -1631,10 +1651,10 @@ function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas,
         <section style={{ display: 'flex', flexDirection: 'column', gap: SP.sm }}>
           {/* DS typography.h3 — 16px·600·1.4 */}
           <p style={{ ...TYP.h3, color: N[700], margin: 0 }}>
-            ¿Hay otros valores que quieras proteger?
+            ¿Algo más que quieras sumar?
           </p>
           <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
-            Si el flete o los aranceles corren por tu cuenta, agrégalos para que queden cubiertos también.
+            Todo es opcional. Agrega lo que aplique para esta operación
           </p>
           {/* Tarjeta agrupadora — DS borderRadius + neutral.50 surface */}
           <div style={{
@@ -1646,17 +1666,19 @@ function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas,
           }}>
             <Input
               label="Flete"
-              placeholder="0.00"
+              placeholder="Ej: USD 1,200"
               type="number"
               value={flete}
               onChange={e => setFlete(e.target.value)}
+              helperText="Si corre por tu cuenta, inclúyelo para que quede cubierto ante cualquier siniestro"
             />
             <Input
-              label="Aranceles / impuestos"
-              placeholder="0.00"
+              label="Aranceles e impuestos"
+              placeholder="Ej: USD 3,500"
               type="number"
               value={aranceles}
               onChange={e => setAranceles(e.target.value)}
+              helperText="Si los asumes tú, agrégalos al valor asegurado"
             />
           </div>
         </section>
@@ -1665,7 +1687,7 @@ function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas,
         <section style={{ display: 'flex', flexDirection: 'column', gap: SP.sm }}>
           {/* DS typography.h3 — 16px·600·1.4 */}
           <p style={{ ...TYP.h3, color: N[700], margin: 0 }}>
-            ¿Quieres reforzar tu cobertura?
+            ¿Quieres agregar algo más a tu cobertura?
           </p>
           <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
             Activa las protecciones extra que necesites para tu operación. Puedes desactivarlas si no aplican.
@@ -1690,21 +1712,25 @@ function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas,
               </div>
             ))}
 
-            {/* Separador DS */}
-            <div style={{ height: 1, background: C.gray200 }} />
+            {!['México', 'Colombia'].includes(paisDestino) && (
+              <>
+                {/* Separador DS */}
+                <div style={{ height: 1, background: C.gray200 }} />
 
-            {/* Coberturas deshabilitadas — DS Toggle disabled + nota tertiary (N[400]) */}
-            {STEP3_ADVANCED_MX.map((cov, i) => (
-              <div key={cov.key}>
-                {i > 0 && <div style={{ height: 1, background: C.gray200 }} />}
-                <CoverageToggleRow
-                  cov={cov}
-                  enabled={false}
-                  onToggle={() => {}}
-                  disabled={true}
-                />
-              </div>
-            ))}
+                {/* Coberturas deshabilitadas — solo visibles fuera de México */}
+                {STEP3_ADVANCED_MX.map((cov, i) => (
+                  <div key={cov.key}>
+                    {i > 0 && <div style={{ height: 1, background: C.gray200 }} />}
+                    <CoverageToggleRow
+                      cov={cov}
+                      enabled={false}
+                      onToggle={() => {}}
+                      disabled={true}
+                    />
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </section>
       </div>
@@ -1738,11 +1764,11 @@ const SHIPMENT_INIT = {
   puertoOrigen:        'Puerto de Shanghai, CN',
   incoterm:            'CIF',
   pesoTotal:           '2,450 kg',
-  paisDestino:         'México',
-  ciudadDestino:       'Ciudad de México',
+  paisDestino:         'Colombia',
+  ciudadDestino:       'Bogotá',
   descripcion:         'Maquinaria industrial de perforación y herramientas',
   posicionArancelaria: '8479.89.99',
-  direccionEntrega:    'Av. Insurgentes Sur 1234, Col. Del Valle, CDMX',
+  direccionEntrega:    'Cra. 7 No. 71-21, Usaquén, Bogotá',
 };
 
 // ─── Step 4 — Resumen panel (reusa ResumenRow) ────────────────────────────────
@@ -1766,16 +1792,16 @@ function ResumenPanelStep4({ totalInsured, prima, adicExtra, iva, total }) {
       <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: SP.xs /* SP.xs (8px) — 10px has no DS token */ }}>
-        <ResumenRow label="Prima base (0.35%)"    value={`USD ${fmt(prima)}`} />
+        <ResumenRow label="Prima base"    value={`USD ${fmt(prima)}`} />
         {adicExtra > 0 && (
           <ResumenRow label="Coberturas adicionales" value={`+USD ${fmt(adicExtra)}`} />
         )}
-        <ResumenRow label="IVA (19%)"             value={`USD ${fmt(iva)}`} />
+        <ResumenRow label="IVA"             value={`USD ${fmt(iva)}`} />
       </div>
 
       <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
 
-      <ResumenRow label="Total póliza" value={`USD ${fmt(total)}`} bold />
+      <ResumenRow label="Total con IVA incluido" value={`USD ${fmt(total)}`} bold />
 
       <p style={{
         ...TYP.caption, color: N[400],
@@ -1825,18 +1851,18 @@ function Step4({ invoices, flete, aranceles, adicCoberturas, shipmentData, setSh
       }}>
 
         {/* Encabezado descriptivo */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: SP.sm /* SP.sm (12px) — 14px has no DS token */ }}>
-          <p style={{
-            ...TYP.body1, color: N[700],
-            margin: 0,
-          }}>
-            Revisa que los datos de tu mercancía estén correctos, los extrajimos automáticamente de tu BL y factura — edita cualquier campo si algo no coincide.
+        <div style={{ display: 'flex', flexDirection: 'column', gap: SP.sm }}>
+          <p style={{ ...TYP.h3, color: N[700], margin: 0 }}>
+            Revisa los datos de tu operación
+          </p>
+          <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
+            Usaremos esta información para emitir tu certificado. Confirma que todo coincida con tu BL y factura comercial
           </p>
 
           {/* Sello de verificación — DS Badge con ícono check custom */}
           <div style={{ display: 'inline-flex' }}>
             <Badge
-              label="Datos verificados contra BL #EGLV142501045077 y Factura comercial · Hoy 2:47 p.m."
+              label="Confirmado desde tu BL"
               variant="success"
               size="medium"
               badgeStyle="light"
@@ -1846,6 +1872,13 @@ function Step4({ invoices, flete, aranceles, adicCoberturas, shipmentData, setSh
             />
           </div>
         </div>
+
+        {/* Alert informativo — DS Alert info */}
+        <Alert
+          variant="info"
+          alertStyle="border"
+          description="Estos datos van directo a la aseguradora. Edita cualquier campo que no coincida con tu documentación aduanera"
+        />
 
         {/* Grid de campos — tarjeta agrupadora */}
         <div style={{
@@ -1860,6 +1893,7 @@ function Step4({ invoices, flete, aranceles, adicCoberturas, shipmentData, setSh
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: SP.ms }}>
             <Input
               label="Puerto de origen"
+              placeholder="Ej: CNSHG — Puerto de Shanghái"
               value={shipmentData.puertoOrigen}
               onChange={e => update('puertoOrigen', e.target.value)}
               status="autoAI"
@@ -1891,6 +1925,7 @@ function Step4({ invoices, flete, aranceles, adicCoberturas, shipmentData, setSh
             />
             <Input
               label="Ciudad destino"
+              placeholder="Ej: Bogotá"
               value={shipmentData.ciudadDestino}
               onChange={e => update('ciudadDestino', e.target.value)}
               status="autoAI"
@@ -1903,6 +1938,7 @@ function Step4({ invoices, flete, aranceles, adicCoberturas, shipmentData, setSh
           {/* Fila 3: Descripción de la mercancía (full width) */}
           <Input
             label="Descripción de la mercancía"
+            placeholder="Ej: Maquinaria industrial de perforación"
             value={shipmentData.descripcion}
             onChange={e => update('descripcion', e.target.value)}
             status="autoAI"
@@ -1985,9 +2021,9 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
   const total        = subtotal + iva;
 
   const coverageLabel = {
-    'door-to-door':   'Bodega a bodega',
-    'origin-to-door': 'Puerto de origen → tu bodega',
-    'dest-to-door':   'Puerto de destino → tu bodega',
+    'door-to-door':   'De bodega a bodega — cubre todo el trayecto',
+    'origin-to-door': 'Desde que embarca — hasta tu bodega',
+    'dest-to-door':   'Desde que llega al país — hasta tu bodega',
   }[coverage] ?? coverage;
 
   const hasAdicionales = adicCoberturas.lucro || adicCoberturas.gastos;
@@ -2005,16 +2041,19 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
   );
 
   return (
-    <div style={{
-      flex: 1, overflowY: 'auto',
-      padding: SP.xl,
-      background: N[50],
-      display: 'flex', flexDirection: 'column', gap: SP.lg,
-    }}>
+    <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-      {/* Encabezado — DS body1 */}
-      <p style={{ ...TYP.body1, color: N[700], margin: 0, maxWidth: 680 }}>
-        Revisa el resumen y confirma. Una vez que emitas, el certificado quedará disponible en los documentos de tu importación al instante.
+      {/* ── Columna izquierda ── */}
+      <div style={{
+        flex: 1, minHeight: 0, overflowY: 'auto',
+        padding: SP.xl,
+        background: N[50],
+        display: 'flex', flexDirection: 'column', gap: SP.lg,
+      }}>
+
+      {/* Encabezado — DS h3 */}
+      <p style={{ ...TYP.h3, color: N[700], margin: 0, maxWidth: 680 }}>
+        Esto es lo que estás contratando
       </p>
 
       {/* Dos columnas — DS grid layout */}
@@ -2171,7 +2210,7 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
             {/* Desglose de costos — DS body2 + labelMd */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: SP.sm, marginBottom: SP.lg }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
-                <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>Prima base (0.35%)</p>
+                <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>Prima base</p>
                 <p style={{ ...TYP.labelMd, color: N[700], margin: 0, whiteSpace: 'nowrap' }}>USD {fmt(prima)}</p>
               </div>
               {adicExtra > 0 && (
@@ -2181,7 +2220,7 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
-                <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>IVA (19%)</p>
+                <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>IVA</p>
                 <p style={{ ...TYP.labelMd, color: N[700], margin: 0, whiteSpace: 'nowrap' }}>USD {fmt(iva)}</p>
               </div>
             </div>
@@ -2192,7 +2231,7 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
             {/* Total — DS typography.h1 (token más prominente: 40px · 700 · 1.2) */}
             <div style={{ marginBottom: SP.xxs }}>
               <p style={{ ...TYP.labelSm, color: N[400], textTransform: 'uppercase', letterSpacing: '0.07em', margin: `0 0 ${SP.xxs}` }}>
-                Total póliza
+                Total con IVA incluido
               </p>
               <p style={{ ...TYP.h1, color: C.primary, margin: 0 }}>
                 USD {fmt(total)}
@@ -2207,6 +2246,14 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
         </div>
 
       </div>
+
+      {/* Subtítulo paso 4 */}
+      <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
+        Revisa el detalle antes de emitir. Una vez confirmado, recibirás el certificado por correo y quedará disponible en tus documentos
+      </p>
+
+      </div>
+
     </div>
   );
 }
@@ -2224,7 +2271,7 @@ const DS_STEP = {
   border:      N[200],
 };
 
-const WIZARD_STEPS = ['Cobertura', '¿Qué asegurar?', 'Adicionales', 'Datos', 'Resumen'];
+const WIZARD_STEPS = ['Tu cobertura', 'Adicionales', 'Tus datos', 'Resumen'];
 const CIRCLE_SIZE  = 28; // px
 const CONNECTOR_TOP = CIRCLE_SIZE / 2; // 14px — alinea al centro del círculo
 
@@ -2351,6 +2398,15 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
 
   if (!open) return null;
 
+  // Total for step-4 CTA label
+  const _baseInv    = invoices.reduce((acc, inv) => !inv.enabled ? acc : acc + (inv.valueMode === 'complete' ? inv.amount : (parseFloat(inv.partialValue) || 0)), 0);
+  const _totalIns   = _baseInv + (parseFloat(flete) || 0) + (parseFloat(aranceles) || 0);
+  const _prima      = _totalIns * 0.0035;
+  const _contCost   = CONTAINERS_DATA.filter(c => contenedoresChecked[c.id]).reduce((s, c) => s + c.pricePerCert, 0);
+  const _adicExtra  = STEP3_STANDARD.reduce((s, cov) => s + (adicCoberturas[cov.key] ? cov.price : 0), 0);
+  const _modalTotal = (_prima + _adicExtra + _contCost) * 1.19;
+  const _fmtTotal   = _modalTotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: C.gray100 }}>
 
@@ -2395,24 +2451,15 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
       {emitted ? (
         <SuccessScreen onListo={handleListo} />
       ) : step === 1 ? (
-        <div style={{ flex: 1, overflowY: 'auto', padding: SP.xl }}>
-          <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: SP.ms }}>
-            <Section title="Alcance de cobertura">
-              <CoverageSelector
-                selected={coverage}
-                onChange={id => setCoverage(id)}
-              />
-            </Section>
-          </div>
-        </div>
-      ) : step === 2 ? (
         <Step2
+          coverage={coverage}
+          onCoverageChange={id => setCoverage(id)}
           invoices={invoices}
           onUpdateInvoice={handleUpdateInvoice}
           contenedoresChecked={contenedoresChecked}
           setContenedoresChecked={setContenedoresChecked}
         />
-      ) : step === 3 ? (
+      ) : step === 2 ? (
         <Step3
           invoices={invoices}
           flete={flete}
@@ -2421,8 +2468,9 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
           setAranceles={setAranceles}
           coberturas={adicCoberturas}
           setCoberturas={setAdicCoberturas}
+          paisDestino={shipmentData.paisDestino}
         />
-      ) : step === 4 ? (
+      ) : step === 3 ? (
         <Step4
           invoices={invoices}
           flete={flete}
@@ -2456,10 +2504,13 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
       )}
       {!emitted && step === 2 && (
         <div style={{
-          display: 'flex', justifyContent: 'flex-end',
+          display: 'flex', justifyContent: 'space-between',
           padding: `${SP.ms} ${SP.xl}`, borderTop: `1px solid ${C.gray200}`,
           flexShrink: 0, background: C.white,
         }}>
+          <Button variant="secondary" size="medium" onClick={() => setStep(1)}>
+            Atrás
+          </Button>
           <Button variant="primary" size="medium" onClick={() => setStep(3)}>
             Continuar
           </Button>
@@ -2488,22 +2539,8 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
           <Button variant="secondary" size="medium" onClick={() => setStep(3)}>
             Atrás
           </Button>
-          <Button variant="primary" size="medium" onClick={() => setStep(5)}>
-            Continuar
-          </Button>
-        </div>
-      )}
-      {!emitted && step === 5 && (
-        <div style={{
-          display: 'flex', justifyContent: 'space-between',
-          padding: `${SP.ms} ${SP.xl}`, borderTop: `1px solid ${C.gray200}`,
-          flexShrink: 0, background: C.white,
-        }}>
-          <Button variant="secondary" size="medium" onClick={() => setStep(4)}>
-            Atrás
-          </Button>
           <Button variant="primary" size="medium" onClick={() => setEmitted(true)}>
-            Emitir póliza
+            Pagar — USD {_fmtTotal} con IVA
           </Button>
         </div>
       )}

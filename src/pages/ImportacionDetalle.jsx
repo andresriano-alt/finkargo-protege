@@ -255,7 +255,7 @@ function InsuranceBanner({ onAccept, onDismiss }) {
           margin: 0,
           lineHeight: 1.4,
         }}>
-          Tu mercancía por USD 45,000 no está asegurada
+          Tu carga vale USD 45,000. Protégela desde USD 162.
         </p>
         <p style={{
           fontFamily: FONT,
@@ -263,7 +263,7 @@ function InsuranceBanner({ onAccept, onDismiss }) {
           color: C.gray400,
           margin: '4px 0 0',
         }}>
-          Protégela desde USD 162 · Sin deducible · 247 importadores como tú protegieron su mercancía este mes.
+          Sin deducible · 247 importadores ya protegieron su carga este mes.
         </p>
       </div>
 
@@ -285,7 +285,7 @@ function InsuranceBanner({ onAccept, onDismiss }) {
             whiteSpace: 'nowrap',
           }}
         >
-          Asegurar mi mercancía
+          Proteger mi carga
         </button>
         <button
           onClick={onDismiss}
