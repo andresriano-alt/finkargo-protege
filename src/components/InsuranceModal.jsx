@@ -120,24 +120,24 @@ const STEP3_ADVANCED_MX = [
 const COVERAGE_OPTS = [
   {
     id: 'door-to-door',
-    label: 'De bodega a bodega — cubre todo el trayecto',
-    description: 'Cobertura completa desde que tu mercancía sale del proveedor hasta que llega a tu bodega.',
+    label: 'Bodega a bodega',
+    description: 'Cobertura total del trayecto',
     tooltip: 'Con tu Incoterm FOB, el riesgo pasa a ti desde que la carga embarca. Esta opción te cubre desde ese momento hasta tu bodega.',
     recommended: true,
     icon: 'warehouse',
   },
   {
     id: 'origin-to-door',
-    label: 'Desde que embarca — hasta tu bodega',
-    description: 'Cobertura desde que tu mercancía es embarcada en origen hasta que llega a tu bodega.',
+    label: 'Desde puerto de origen',
+    description: 'Desde embarque hasta tu bodega',
     tooltip: 'Cubre desde que tu carga sube al barco en origen hasta que llega a tu bodega de destino.',
     recommended: false,
     icon: 'ship',
   },
   {
     id: 'dest-to-door',
-    label: 'Desde que llega al país — hasta tu bodega',
-    description: 'Cobertura desde que tu mercancía llega al país hasta que llega a tu bodega.',
+    label: 'Desde puerto de destino',
+    description: 'Solo tramo terrestre local',
     tooltip: 'Cubre el tramo terrestre desde el puerto de destino hasta tu bodega.',
     recommended: false,
     icon: 'truck',
@@ -1075,7 +1075,7 @@ function ModalBody({ asegurarTab, setAsegurarTab, invoices, setInvoices, adicion
 
 // ─── Success screen ───────────────────────────────────────────────────────────
 // DS success tokens: main #2CA14D · dark #03593A · light #AAEAA8 · ultraLight #E0F7E6
-function SuccessScreen({ onListo }) {
+function SuccessScreen({ onListo, contenedorEnabled = false }) {
   return (
     <div style={{
       flex: 1, overflowY: 'auto',
@@ -1088,7 +1088,6 @@ function SuccessScreen({ onListo }) {
       {/* Check icon — DS success.ultraLight bg · success.light border · success.dark stroke */}
       <div style={{
         width: 96, height: 96,
-        /* No DS token for circular radius — '50%' is the correct CSS for circles */
         borderRadius: '50%',
         background: C.bannerBg,
         border: `3px solid ${C.successLight}`,
@@ -1098,7 +1097,7 @@ function SuccessScreen({ onListo }) {
         <svg width="46" height="46" viewBox="0 0 46 46" fill="none" aria-hidden="true">
           <path
             d="M11 23L19.5 31.5L35 15"
-            stroke={C.successDark}       // DS success.dark
+            stroke={C.successDark}
             strokeWidth="3.8"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -1111,10 +1110,34 @@ function SuccessScreen({ onListo }) {
         Carga protegida ✓
       </p>
 
-      {/* Subtítulo — DS typography.body2 */}
-      <p style={{ ...TYP.body2, color: N[500], margin: `0 0 ${SP.xl}` }}>
-        Certificado #VERT-2025-00847 vigente hasta 26 oct 2025. Lo encontrarás en tus documentos
-      </p>
+      {/* Certificados — diferenciados si hay contenedor */}
+      {contenedorEnabled ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: SP.xs, margin: `0 0 ${SP.xl}` }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP.xs,
+            background: C.white, border: `1px solid ${N[200]}`, borderRadius: BR.xs,
+            padding: `${SP.xs} ${SP.ms}`,
+          }}>
+            <span style={{ ...TYP.body2, color: N[500] }}>Certificado mercancía:</span>
+            <span style={{ ...TYP.labelMd, color: C.primaryDark }}>VERT-2025-00847-A</span>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP.xs,
+            background: C.white, border: `1px solid ${N[200]}`, borderRadius: BR.xs,
+            padding: `${SP.xs} ${SP.ms}`,
+          }}>
+            <span style={{ ...TYP.body2, color: N[500] }}>Certificado contenedor:</span>
+            <span style={{ ...TYP.labelMd, color: C.primaryDark }}>VERT-2025-00847-B</span>
+          </div>
+          <p style={{ ...TYP.caption, color: N[400], margin: `${SP.xxs} 0 0` }}>
+            Vigentes hasta 26 oct 2025 · Los encontrarás en tus documentos
+          </p>
+        </div>
+      ) : (
+        <p style={{ ...TYP.body2, color: N[500], margin: `0 0 ${SP.xl}` }}>
+          Certificado #VERT-2025-00847 vigente hasta 26 oct 2025. Lo encontrarás en tus documentos
+        </p>
+      )}
 
       {/* Botón Listo — DS Button primary */}
       <Button variant="primary" size="medium" onClick={onListo}>
@@ -1240,12 +1263,9 @@ function ResumenRow({ label, value, bold }) {
   );
 }
 
-function ResumenPanel({ selectedOptions, invTotal, contenedoresChecked, prima, iva, total }) {
+function ResumenPanel({ invTotal, prima, iva, total, fleteVal = 0, arancVal = 0, contenedorPrima = 0 }) {
   const fmt    = n => n.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtInt = n => n.toLocaleString('es-CO', { minimumFractionDigits: 0 });
-  const contCost = CONTAINERS_DATA
-    .filter(c => contenedoresChecked[c.id])
-    .reduce((sum, c) => sum + c.pricePerCert, 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -1258,11 +1278,14 @@ function ResumenPanel({ selectedOptions, invTotal, contenedoresChecked, prima, i
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: SP.xs }}>
-        {selectedOptions.mercancia && invTotal > 0 && (
-          <ResumenRow label="Valor asegurado mercancía" value={`USD ${fmtInt(invTotal)}`} />
+        {invTotal > 0 && (
+          <ResumenRow label="Mercancía" value={`USD ${fmtInt(invTotal)}`} />
         )}
-        {selectedOptions.contenedor && contCost > 0 && (
-          <ResumenRow label="Valor asegurado contenedor(es)" value={`+USD ${fmtInt(contCost)}`} />
+        {fleteVal > 0 && (
+          <ResumenRow label="Flete" value={`+USD ${fmtInt(fleteVal)}`} />
+        )}
+        {arancVal > 0 && (
+          <ResumenRow label="Aranceles" value={`+USD ${fmtInt(arancVal)}`} />
         )}
       </div>
 
@@ -1270,6 +1293,9 @@ function ResumenPanel({ selectedOptions, invTotal, contenedoresChecked, prima, i
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: SP.xs }}>
         <ResumenRow label="Prima base" value={`USD ${fmt(prima)}`} />
+        {contenedorPrima > 0 && (
+          <ResumenRow label="Contenedor" value={`+USD ${fmt(contenedorPrima)}`} />
+        )}
         <ResumenRow label="IVA"        value={`USD ${fmt(iva)}`} />
       </div>
 
@@ -1290,6 +1316,286 @@ function ResumenPanel({ selectedOptions, invTotal, contenedoresChecked, prima, i
   );
 }
 
+// ─── Unified sidebar ──────────────────────────────────────────────────────────
+function ResumenSidebar({ coverage, invoices, flete, aranceles, adicCoberturas, pctCoberturas, contenedorPrima = 0 }) {
+  const fmt    = n => n.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtInt = n => n.toLocaleString('es-CO', { minimumFractionDigits: 0 });
+
+  const enabledInvoices = invoices.filter(inv => inv.enabled);
+  const invTotal = enabledInvoices.reduce((acc, inv) =>
+    acc + (inv.valueMode === 'complete' ? inv.amount : (parseFloat(inv.partialValue) || 0)), 0);
+  const fleteVal = parseFloat(flete)    || 0;
+  const arancVal = parseFloat(aranceles) || 0;
+  const totalBase = invTotal + fleteVal + arancVal;
+
+  const lucroAmt  = adicCoberturas.lucro  ? totalBase * ((parseFloat(pctCoberturas.lucro)  || 0) / 100) : 0;
+  const gastosAmt = adicCoberturas.gastos ? totalBase * ((parseFloat(pctCoberturas.gastos) || 0) / 100) : 0;
+  const totalAsegurado = totalBase + lucroAmt + gastosAmt;
+
+  const primaNeta   = totalAsegurado * 0.0043;
+  const iva         = primaNeta * 0.16;
+  const totalAPagar = primaNeta + iva + contenedorPrima;
+
+  const coverageLabel = {
+    'door-to-door':   'Bodega a bodega',
+    'origin-to-door': 'Desde puerto de origen',
+    'dest-to-door':   'Desde puerto de destino',
+  }[coverage];
+
+  if (enabledInvoices.length === 0 || invTotal === 0) {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        minHeight: 240, padding: SP.lg, textAlign: 'center', gap: SP.sm,
+      }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: BR.full, background: N[100],
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2L17 5.5V10.5C17 14.2 13.9 17.6 10 18.5C6.1 17.6 3 14.2 3 10.5V5.5L10 2Z"
+                  fill="none" stroke={N[300]} strokeWidth="1.5" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <p style={{ ...TYP.body2, color: N[400], margin: 0, lineHeight: 1.5 }}>
+          Selecciona las facturas para ver el resumen
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <p style={{
+        ...TYP.caption, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+        color: N[500], margin: `0 0 ${SP.md}`,
+      }}>
+        Resumen de cobertura
+      </p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: SP.xs }}>
+
+        {/* 1. Alcance */}
+        {coverageLabel && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: SP.xs }}>
+            <span style={{ ...TYP.caption, color: N[400], flexShrink: 0 }}>Alcance</span>
+            <span style={{ ...TYP.caption, fontWeight: 600, color: C.secondary, textAlign: 'right' }}>
+              {coverageLabel}
+            </span>
+          </div>
+        )}
+
+        {/* 2. Facturas */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+          <span style={{ ...TYP.body2, color: N[500] }}>
+            {enabledInvoices.length} factura{enabledInvoices.length > 1 ? 's' : ''}
+          </span>
+          <span style={{ ...TYP.body2, fontWeight: 500, color: N[700] }}>USD {fmtInt(invTotal)}</span>
+        </div>
+
+        {/* 3. Flete */}
+        {fleteVal > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+            <span style={{ ...TYP.body2, color: N[500] }}>Flete</span>
+            <span style={{ ...TYP.body2, fontWeight: 500, color: N[700] }}>+USD {fmtInt(fleteVal)}</span>
+          </div>
+        )}
+
+        {/* 4. Aranceles */}
+        {arancVal > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+            <span style={{ ...TYP.body2, color: N[500] }}>Aranceles</span>
+            <span style={{ ...TYP.body2, fontWeight: 500, color: N[700] }}>+USD {fmtInt(arancVal)}</span>
+          </div>
+        )}
+
+        {/* 5. Lucro cesante */}
+        {adicCoberturas.lucro && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+            <span style={{ ...TYP.body2, color: N[500] }}>Lucro cesante</span>
+            <span style={{ ...TYP.body2, fontWeight: 500, color: N[700] }}>
+              {parseFloat(pctCoberturas.lucro) || 0}% — USD {fmtInt(lucroAmt)}
+            </span>
+          </div>
+        )}
+
+        {/* 6. Gastos adicionales */}
+        {adicCoberturas.gastos && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+            <span style={{ ...TYP.body2, color: N[500] }}>Gastos adicionales</span>
+            <span style={{ ...TYP.body2, fontWeight: 500, color: N[700] }}>
+              {parseFloat(pctCoberturas.gastos) || 0}% — USD {fmtInt(gastosAmt)}
+            </span>
+          </div>
+        )}
+
+      </div>
+
+      {/* 7. Separador */}
+      <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
+
+      {/* 8. Valor total asegurado */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs, marginBottom: SP.ms }}>
+        <span style={{ ...TYP.labelMd, color: C.primaryDark }}>Valor total asegurado</span>
+        <span style={{ ...TYP.labelLg, color: C.primaryDark }}>USD {fmtInt(totalAsegurado)}</span>
+      </div>
+
+      {/* 9–11. Costos */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: SP.xs }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+          <span style={{ ...TYP.body2, color: N[500] }}>Prima neta (0.43%)</span>
+          <span style={{ ...TYP.body2, fontWeight: 500, color: N[700] }}>USD {fmt(primaNeta)}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+          <span style={{ ...TYP.body2, color: N[500] }}>IVA (16%)</span>
+          <span style={{ ...TYP.body2, fontWeight: 500, color: N[700] }}>USD {fmt(iva)}</span>
+        </div>
+        {contenedorPrima > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+            <span style={{ ...TYP.body2, color: N[500] }}>Contenedor</span>
+            <span style={{ ...TYP.body2, fontWeight: 500, color: N[700] }}>+USD {fmt(contenedorPrima)}</span>
+          </div>
+        )}
+      </div>
+
+      {/* 12. Total a pagar */}
+      <div style={{
+        background: C.primary, borderRadius: BR.sm, padding: SP.ms, marginTop: SP.ms,
+        display: 'flex', flexDirection: 'column', gap: SP.xxs,
+      }}>
+        <p style={{
+          ...TYP.caption, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.55)', margin: 0,
+        }}>
+          Total a pagar
+        </p>
+        <p style={{ ...TYP.h2, color: C.white, margin: 0 }}>
+          USD {fmt(totalAPagar)}
+        </p>
+        <p style={{ ...TYP.caption, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+          IVA incluido
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Logística — click-to-edit field ─────────────────────────────────────────
+const TIPO_CONT_OPTS = ["20' Dry", "40' Dry", "40' HC", "20' Reefer", "40' Reefer"];
+
+function LogisticField({ fieldKey, label, badgeLabel, badgeVariant = 'success', alwaysEdit = false, editing, setEditing, value, onChange, inputType = 'text', selectOptions = TIPO_CONT_OPTS }) {
+  const isEdit = alwaysEdit || editing === fieldKey;
+  const editInputStyle = {
+    width: '100%', height: 30, border: `1.5px solid ${C.primaryLight}`,
+    borderRadius: BR.xxs, padding: `0 ${SP.xs}`,
+    fontFamily: FONT, fontSize: '14px', fontWeight: 400,
+    color: C.textPrimary, outline: 'none', boxSizing: 'border-box',
+    background: C.white,
+  };
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: SP.sm,
+      padding: `${SP.xs} 0`,
+      borderBottom: `1px solid ${N[100]}`,
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ ...TYP.caption, color: N[400], margin: `0 0 2px` }}>{label}</p>
+        {isEdit ? (
+          inputType === 'select' ? (
+            <select
+              autoFocus
+              value={value}
+              onChange={e => onChange(e.target.value)}
+              onBlur={() => setEditing(null)}
+              style={{
+                ...editInputStyle,
+                appearance: 'none', cursor: 'pointer',
+                paddingRight: SP.xl,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%232128B1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: `right ${SP.xs} center`,
+              }}
+            >
+              {selectOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+          ) : (
+            <input
+              autoFocus={editing === fieldKey}
+              value={value}
+              onChange={e => onChange(e.target.value)}
+              onBlur={() => !alwaysEdit && setEditing(null)}
+              onKeyDown={e => { if (e.key === 'Enter' && !alwaysEdit) setEditing(null); }}
+              style={editInputStyle}
+            />
+          )
+        ) : (
+          <div
+            onClick={() => setEditing(fieldKey)}
+            style={{ cursor: 'text', display: 'flex', alignItems: 'center', gap: SP.xxs, paddingTop: 2 }}
+          >
+            <span style={{ ...TYP.body2, color: value ? C.textPrimary : N[300] }}>
+              {value || '—'}
+            </span>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ color: N[300], flexShrink: 0 }}>
+              <path d="M8 2L10 4L4 10H2V8L8 2Z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+        )}
+      </div>
+      {badgeLabel && <Badge label={badgeLabel} variant={badgeVariant} size="small" badgeStyle="light" border={true} />}
+    </div>
+  );
+}
+
+const LOGISTIC_FIELDS = [
+  { key: 'bl',            label: 'N° BL',                   badge: 'BL',       variant: 'success' },
+  { key: 'puertoOrigen',  label: 'Puerto de origen',         badge: 'BL',       variant: 'success' },
+  { key: 'puertoDestino', label: 'Puerto de destino',        badge: 'BL',       variant: 'success' },
+  { key: 'ciudadDestino', label: 'Ciudad destino',           badge: 'BL',       variant: 'success' },
+  { key: 'paisDestino',   label: 'País destino',             badge: 'BL',       variant: 'success' },
+  { key: 'pesoTotal',     label: 'Peso estimado (kg)',       badge: 'BL',       variant: 'success' },
+  { key: 'descripcion',   label: 'Descripción de mercancía', badge: 'Facturas', variant: 'neutral'  },
+];
+
+function InformacionLogistica({ shipmentData, setShipmentData }) {
+  const [editing, setEditing] = useState(null);
+  function update(key, val) { setShipmentData(prev => ({ ...prev, [key]: val })); }
+
+  return (
+    <div style={{ background: C.white, borderRadius: BR.sm, border: `1px solid ${N[200]}`, padding: `0 ${SP.md}` }}>
+      {LOGISTIC_FIELDS.map(f => (
+        <LogisticField
+          key={f.key}
+          fieldKey={f.key}
+          label={f.label}
+          badgeLabel={f.badge}
+          badgeVariant={f.variant}
+          editing={editing}
+          setEditing={setEditing}
+          value={shipmentData[f.key] ?? ''}
+          onChange={val => update(f.key, val)}
+        />
+      ))}
+      {/* Dirección — always editable */}
+      <div style={{ padding: `${SP.xs} 0` }}>
+        <p style={{ ...TYP.caption, color: N[400], margin: `0 0 ${SP.xxs}` }}>Dirección de destino</p>
+        <input
+          value={shipmentData.direccionEntrega ?? ''}
+          onChange={e => update('direccionEntrega', e.target.value)}
+          placeholder="Ingresa la dirección de entrega"
+          style={{
+            width: '100%', height: 32, border: `1.5px solid ${N[200]}`,
+            borderRadius: BR.xxs, padding: `0 ${SP.xs}`,
+            fontFamily: FONT, fontSize: '14px', fontWeight: 400,
+            color: C.textPrimary, outline: 'none', boxSizing: 'border-box',
+            background: N[50],
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 // ─── Step 2 — Main layout ─────────────────────────────────────────────────────
 
 const MERCH_CHIPS = [
@@ -1300,24 +1606,16 @@ const CONT_CHIPS = [
   'Daños físicos al contenedor', 'Limpieza ordinaria y extraordinaria', 'Sin deducible en pérdida total',
 ];
 
-function Step2({ coverage, onCoverageChange, invoices, onUpdateInvoice, contenedoresChecked, setContenedoresChecked }) {
-  const [expandedInfo, setExpandedInfo] = useState({ mercancia: false, contenedor: false });
-
+function Step2({ coverage, onCoverageChange, invoices, onUpdateInvoice, contenedorEnabled, setContenedorEnabled, contenedorNombre, setContenedorNombre, contenedorNaviera, setContenedorNaviera, contenedorTipo, setContenedorTipo, flete, setFlete, aranceles, setAranceles, adicCoberturas, setAdicCoberturas, pctCoberturas, setPctCoberturas, paisDestino }) {
+  const [containerEditing, setContainerEditing] = useState(null);
   const invTotal = invoices.reduce((acc, inv) => {
     if (!inv.enabled) return acc;
     return acc + (inv.valueMode === 'complete' ? inv.amount : (parseFloat(inv.partialValue) || 0));
   }, 0);
-  const contenedoresCost = CONTAINERS_DATA
-    .filter(c => contenedoresChecked[c.id])
-    .reduce((sum, c) => sum + c.pricePerCert, 0);
-  const prima = invTotal * 0.0035;
-  const iva   = (prima + contenedoresCost) * 0.19;
-  const total = prima + contenedoresCost + iva;
-
-  const fmtInt          = n => n.toLocaleString('es-CO', { minimumFractionDigits: 0 });
-  const anyInvoiceOn    = invoices.some(inv => inv.enabled);
-  const anyContenedorOn = CONTAINERS_DATA.some(c => contenedoresChecked[c.id]);
-  const showDualAlert   = anyInvoiceOn && anyContenedorOn;
+  const fmtInt = n => n.toLocaleString('es-CO', { minimumFractionDigits: 0 });
+  const fleteNum    = parseFloat(flete)    || 0;
+  const arancNum    = parseFloat(aranceles) || 0;
+  const totalInsured = invTotal + fleteNum + arancNum;
 
   const chevron = (open) => (
     <svg
@@ -1329,15 +1627,12 @@ function Step2({ coverage, onCoverageChange, invoices, onUpdateInvoice, contened
   );
 
   return (
-    <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-
-      {/* ── Columna izquierda ── */}
-      <div style={{
-        flex: 1, minHeight: 0, overflowY: 'auto',
-        padding: `${SP.xl} 28px ${SP.xl} ${SP.xl}`,
-        display: 'flex', flexDirection: 'column', gap: SP.lg,
-        background: N[50],
-      }}>
+    <div style={{
+      flex: 1, minHeight: 0, overflowY: 'auto',
+      padding: `${SP.xl} 28px ${SP.xl} ${SP.xl}`,
+      display: 'flex', flexDirection: 'column', gap: SP.lg,
+      background: N[50],
+    }}>
 
         {/* ── Alcance de cobertura ── */}
         <Section title="¿Desde dónde quieres estar cubierto?">
@@ -1364,12 +1659,9 @@ function Step2({ coverage, onCoverageChange, invoices, onUpdateInvoice, contened
           <p style={{
             ...TYP.caption, fontWeight: 700,
             letterSpacing: '0.08em', textTransform: 'uppercase',
-            color: N[500], margin: 0, padding: `${SP.xs} ${SP.md} 0`,
+            color: N[500], margin: 0, padding: `${SP.xs} ${SP.md}`,
           }}>
             ¿Qué quieres proteger?
-          </p>
-          <p style={{ ...TYP.caption, color: N[500], margin: 0, padding: `${SP.xxs} ${SP.md} ${SP.xs}` }}>
-            Extraído de tu factura comercial. Activa las que quieras incluir
           </p>
 
           {/* Filas de facturas */}
@@ -1391,96 +1683,154 @@ function Step2({ coverage, onCoverageChange, invoices, onUpdateInvoice, contened
           </div>
         </div>
 
-        {/* ── Card B: El contenedor ── */}
-        <div style={{ background: C.white, borderRadius: BR.sm, border: `1px solid ${N[200]}` }}>
-
-          {/* Header */}
-          <div style={{ padding: SP.md }}>
-            <p style={{ ...TYP.labelMd, color: C.primaryDark, margin: `0 0 ${SP.xxs}` }}>
-              ¿Quieres cubrir también el contenedor?
-            </p>
-            <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
-              Cubre daños físicos, golpes y costos de limpieza que la naviera te pueda cobrar si el contenedor regresa en mal estado. Genera un certificado separado al de tu mercancía.
-            </p>
+        {/* ── Flete y aranceles ── */}
+        <div style={{ background: C.white, borderRadius: BR.sm, border: `1px solid ${N[200]}`, padding: SP.md }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: SP.ms }}>
+            <Input
+              label="Flete estimado (USD)"
+              placeholder="Ej. 3,200"
+              type="number"
+              value={flete}
+              onChange={e => setFlete(e.target.value)}
+              helperText="Puedes omitirlo si no lo tienes"
+            />
+            <Input
+              label="Aranceles / impuestos (USD)"
+              placeholder="Ej. 4,500"
+              type="number"
+              value={aranceles}
+              onChange={e => setAranceles(e.target.value)}
+            />
           </div>
-
-          {/* Separador header → contenido (token N[200]) */}
-          <Divider />
-
-          {/* Label de sección */}
-          <p style={{
-            ...TYP.caption, fontWeight: 700,
-            letterSpacing: '0.08em', textTransform: 'uppercase',
-            color: N[500], margin: 0, padding: `${SP.xs} ${SP.md}`,
-          }}>
-            Contenedores encontrados en tu BL
-          </p>
-
-          {/* Filas de contenedores */}
-          {CONTAINERS_DATA.map((c, idx) => (
-            <div key={c.id}>
-              <div style={{ height: 1, background: N[200] }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: SP.sm, padding: SP.md }}>
-                <div style={{ flexShrink: 0 }}>
-                  <Toggle
-                    checked={contenedoresChecked[c.id]}
-                    size="small"
-                    onChange={checked => setContenedoresChecked(prev => ({ ...prev, [c.id]: checked }))}
-                  />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...TYP.labelMd, color: C.primaryDark, margin: 0 }}>{c.number}</p>
-                  <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>{c.line} · {c.size}</p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: SP.xs, flexShrink: 0 }}>
-                  <Badge label="Del BL" variant="neutral" size="small" badgeStyle="light" border={true} />
-                  <span style={{
-                    ...TYP.caption, fontWeight: 600, color: C.successDark,
-                    background: C.bannerBg, borderRadius: BR.md, padding: `3px ${SP.xs}`,
-                    whiteSpace: 'nowrap',
-                  }}>
-                    +USD {c.pricePerCert} / cert.
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
 
-        {/* Alert — ambas coberturas activas al mismo tiempo */}
-        {showDualAlert && (
-          <Alert
-            variant="info"
-            alertStyle="border"
-            description="Recibirás dos certificados: uno para tu mercancía y otro para el contenedor."
-          />
-        )}
+        {/* ── Contenedor (sección colapsable) ── */}
+        <div style={{ background: C.white, borderRadius: BR.sm, border: `1px solid ${N[200]}` }}>
 
-      </div>
+          {/* Header: toggle + título + subtítulo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: SP.sm, padding: SP.md }}>
+            <div style={{ flexShrink: 0 }}>
+              <Toggle
+                checked={contenedorEnabled}
+                size="small"
+                onChange={checked => setContenedorEnabled(checked)}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ ...TYP.labelMd, color: C.primaryDark, margin: 0 }}>
+                Asegurar contenedor
+              </p>
+              <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
+                Cubre cargos por daño o limpieza del contenedor
+              </p>
+            </div>
+          </div>
 
-      {/* ── Columna derecha: Resumen ── */}
-      <div style={{
-        width: 288, minHeight: 0, flexShrink: 0,
-        borderLeft: `1px solid ${N[200]}`,
-        background: C.white,
-        overflowY: 'auto',
-        padding: `${SP.xl} ${SP.lg}`,
-      }}>
-        <ResumenPanel
-          selectedOptions={{ mercancia: true, contenedor: true }}
-          invTotal={invTotal}
-          contenedoresChecked={contenedoresChecked}
-          prima={prima}
-          iva={iva}
-          total={total}
-        />
-      </div>
+          {/* Contenido expandible */}
+          <div style={{
+            overflow: 'hidden',
+            maxHeight: contenedorEnabled ? '320px' : '0',
+            transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1)',
+          }}>
+            <div style={{
+              borderTop: `1px solid ${N[200]}`,
+              padding: `0 ${SP.md} ${SP.md}`,
+              display: 'flex', flexDirection: 'column', gap: SP.sm,
+            }}>
+              <LogisticField
+                fieldKey="nombre"
+                label="Nombre del contenedor"
+                badgeLabel="BL"
+                editing={containerEditing}
+                setEditing={setContainerEditing}
+                value={contenedorNombre}
+                onChange={val => setContenedorNombre(val)}
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: SP.ms }}>
+                <LogisticField
+                  fieldKey="naviera"
+                  label="Naviera"
+                  badgeLabel="BL"
+                  editing={containerEditing}
+                  setEditing={setContainerEditing}
+                  value={contenedorNaviera}
+                  onChange={val => setContenedorNaviera(val)}
+                />
+                <LogisticField
+                  fieldKey="tipo"
+                  label="Tipo de contenedor"
+                  badgeLabel="BL"
+                  editing={containerEditing}
+                  setEditing={setContainerEditing}
+                  value={contenedorTipo}
+                  onChange={val => setContenedorTipo(val)}
+                  inputType="select"
+                />
+              </div>
+              <Alert
+                variant="warning"
+                alertStyle="border"
+                description="Genera un certificado separado."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Coberturas adicionales ── */}
+        <section style={{ display: 'flex', flexDirection: 'column', gap: SP.sm }}>
+          <p style={{ ...TYP.h3, color: N[700], margin: 0 }}>
+            ¿Quieres agregar algo más a tu cobertura?
+          </p>
+          <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
+            Activa las protecciones extra que necesites. Puedes desactivarlas si no aplican.
+          </p>
+          <div style={{
+            background: C.white, borderRadius: BR.sm, border: `1px solid ${N[200]}`,
+            padding: `0 ${SP.lg}`,
+          }}>
+            {STEP3_STANDARD.map((cov, i) => (
+              <div key={cov.key}>
+                {i > 0 && <div style={{ height: 1, background: C.gray200 }} />}
+                <CoverageToggleRow
+                  cov={cov}
+                  enabled={adicCoberturas[cov.key]}
+                  onToggle={checked => setAdicCoberturas(prev => ({ ...prev, [cov.key]: checked }))}
+                  pct={pctCoberturas[cov.key]}
+                  onPctChange={val => setPctCoberturas(prev => ({ ...prev, [cov.key]: val }))}
+                  totalInsured={totalInsured}
+                />
+              </div>
+            ))}
+            {!['México', 'Colombia'].includes(paisDestino) && (
+              <>
+                <div style={{ height: 1, background: C.gray200 }} />
+                {STEP3_ADVANCED_MX.map((cov, i) => (
+                  <div key={cov.key}>
+                    {i > 0 && <div style={{ height: 1, background: C.gray200 }} />}
+                    <CoverageToggleRow
+                      cov={cov}
+                      enabled={false}
+                      onToggle={() => {}}
+                      disabled={true}
+                    />
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </section>
+
+
     </div>
   );
 }
 
 // ─── Step 3 — Coverage toggle row ────────────────────────────────────────────
-function CoverageToggleRow({ cov, enabled, onToggle, disabled = false }) {
+function CoverageToggleRow({ cov, enabled, onToggle, disabled = false, pct, onPctChange, totalInsured = 0 }) {
+  const pctNum = parseFloat(pct) || 0;
+  const usdVal = totalInsured * (pctNum / 100);
+  const fmtInt = n => n.toLocaleString('es-CO', { minimumFractionDigits: 0 });
+
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
@@ -1495,24 +1845,43 @@ function CoverageToggleRow({ cov, enabled, onToggle, disabled = false }) {
         </p>
         {cov.description && (
           <p style={{
-            /* DS body2 (14px) — 13px has no DS token */
-            /* disabled: N[400] = tertiary text token (neutral[400]) */
             ...TYP.body2, color: disabled ? N[400] : N[500],
             margin: `${SP.xxs} 0 0`,
           }}>
             {cov.description}
           </p>
         )}
+
+        {/* Percentage input — visible only when toggle ON and has handler */}
+        {enabled && !disabled && onPctChange && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: SP.xs, marginTop: SP.sm, flexWrap: 'wrap' }}>
+            <input
+              type="number"
+              value={pct}
+              onChange={e => onPctChange(e.target.value)}
+              min="0" max="100" step="1"
+              style={{
+                width: 70, height: 32, padding: `0 ${SP.xs}`,
+                border: `1.5px solid ${N[200]}`, borderRadius: BR.xs,
+                fontFamily: FONT, fontSize: '14px', fontWeight: 400,
+                color: C.textPrimary, outline: 'none', boxSizing: 'border-box',
+              }}
+            />
+            <span style={{ ...TYP.body2, color: N[500] }}>% del valor asegurado</span>
+            <span style={{ ...TYP.labelMd, color: C.primaryDark }}>= USD {fmtInt(usdVal)}</span>
+          </div>
+        )}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: SP.sm, flexShrink: 0 }}>
-        <span style={{
-          background: disabled ? N[100] : C.bannerBg,
-          color: disabled ? N[400] : C.successDark,
-          borderRadius: BR.md, padding: `3px ${SP.xs}`,
-          ...TYP.caption, fontWeight: 600, whiteSpace: 'nowrap',
-        }}>
-          +USD {cov.price}
-        </span>
+        {disabled && (
+          <span style={{
+            background: N[100], color: N[400],
+            borderRadius: BR.md, padding: `3px ${SP.xs}`,
+            ...TYP.caption, fontWeight: 600, whiteSpace: 'nowrap',
+          }}>
+            No aplica
+          </span>
+        )}
         <Toggle
           checked={enabled}
           size="small"
@@ -1573,11 +1942,13 @@ function UnavailableAccordion({ open, onToggle, coverages }) {
 }
 
 // ─── Step 3 — Resumen panel ───────────────────────────────────────────────────
-function ResumenPanelStep3({ baseInvoices, fleteVal, arancVal, prima, coberturas, adicExtra, iva, total }) {
+function ResumenPanelStep3({ baseInvoices, fleteVal, arancVal, prima, coberturas, pctCoberturas, adicExtra, contenedorPrima = 0, iva, total }) {
   const fmt    = n => n.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtInt = n => n.toLocaleString('es-CO', { minimumFractionDigits: 0 });
 
   const totalInsured = baseInvoices + fleteVal + arancVal;
+  const lucroAmt  = coberturas.lucro  ? totalInsured * ((parseFloat(pctCoberturas?.lucro)  || 0) / 100) : 0;
+  const gastosAmt = coberturas.gastos ? totalInsured * ((parseFloat(pctCoberturas?.gastos) || 0) / 100) : 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -1603,8 +1974,9 @@ function ResumenPanelStep3({ baseInvoices, fleteVal, arancVal, prima, coberturas
 
       {/* Prima y coberturas */}
       <ResumenRow label="Prima base" value={`USD ${fmt(prima)}`} />
-      {coberturas.lucro  && <ResumenRow label="Lucro cesante"      value="+USD 18.00" />}
-      {coberturas.gastos && <ResumenRow label="Gastos adicionales" value="+USD 12.00" />}
+      {coberturas.lucro  && <ResumenRow label="Lucro cesante"      value={`+USD ${fmt(lucroAmt)}`} />}
+      {coberturas.gastos && <ResumenRow label="Gastos adicionales" value={`+USD ${fmt(gastosAmt)}`} />}
+      {contenedorPrima > 0 && <ResumenRow label="Contenedor" value={`+USD ${fmt(contenedorPrima)}`} />}
       <ResumenRow label="IVA" value={`USD ${fmt(iva)}`} />
 
       <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
@@ -1622,68 +1994,24 @@ function ResumenPanelStep3({ baseInvoices, fleteVal, arancVal, prima, coberturas
 }
 
 // ─── Step 3 — Main layout ─────────────────────────────────────────────────────
-function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas, setCoberturas, paisDestino }) {
+function Step3({ invoices, flete, aranceles, coberturas, setCoberturas, paisDestino, pctCoberturas, setPctCoberturas }) {
   const baseInvoices = invoices.reduce((acc, inv) => {
     if (!inv.enabled) return acc;
     return acc + (inv.valueMode === 'complete' ? inv.amount : (parseFloat(inv.partialValue) || 0));
   }, 0);
-  const fleteVal = parseFloat(flete)    || 0;
-  const arancVal = parseFloat(aranceles) || 0;
+  const fleteVal     = parseFloat(flete)    || 0;
+  const arancVal     = parseFloat(aranceles) || 0;
   const totalInsured = baseInvoices + fleteVal + arancVal;
-  const prima     = totalInsured * 0.0035;
-  const adicExtra = STEP3_STANDARD.reduce((sum, cov) => sum + (coberturas[cov.key] ? cov.price : 0), 0);
-  const subtotal  = prima + adicExtra;
-  const iva       = subtotal * 0.19;
-  const total     = subtotal + iva;
 
   return (
-    <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+    <div style={{
+      flex: 1, minHeight: 0, overflowY: 'auto',
+      padding: `${SP.xl} 28px ${SP.xl} ${SP.xl}`,
+      display: 'flex', flexDirection: 'column', gap: SP.lg,
+      background: N[50],
+    }}>
 
-      {/* ── Columna izquierda ── */}
-      <div style={{
-        flex: 1, minHeight: 0, overflowY: 'auto',
-        padding: `${SP.xl} 28px ${SP.xl} ${SP.xl}`,
-        display: 'flex', flexDirection: 'column', gap: SP.lg,
-        background: N[50],
-      }}>
-
-        {/* Bloque 1: Valores adicionales a asegurar */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: SP.sm }}>
-          {/* DS typography.h3 — 16px·600·1.4 */}
-          <p style={{ ...TYP.h3, color: N[700], margin: 0 }}>
-            ¿Algo más que quieras sumar?
-          </p>
-          <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
-            Todo es opcional. Agrega lo que aplique para esta operación
-          </p>
-          {/* Tarjeta agrupadora — DS borderRadius + neutral.50 surface */}
-          <div style={{
-            background: C.white,
-            borderRadius: BR.sm,
-            border: `1px solid ${N[200]}`,
-            padding: SP.md,
-            display: 'flex', gap: SP.ms,
-          }}>
-            <Input
-              label="Flete"
-              placeholder="Ej: USD 1,200"
-              type="number"
-              value={flete}
-              onChange={e => setFlete(e.target.value)}
-              helperText="Si corre por tu cuenta, inclúyelo para que quede cubierto ante cualquier siniestro"
-            />
-            <Input
-              label="Aranceles e impuestos"
-              placeholder="Ej: USD 3,500"
-              type="number"
-              value={aranceles}
-              onChange={e => setAranceles(e.target.value)}
-              helperText="Si los asumes tú, agrégalos al valor asegurado"
-            />
-          </div>
-        </section>
-
-        {/* Bloque 2: Coberturas adicionales */}
+        {/* Bloque: Coberturas adicionales */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: SP.sm }}>
           {/* DS typography.h3 — 16px·600·1.4 */}
           <p style={{ ...TYP.h3, color: N[700], margin: 0 }}>
@@ -1708,6 +2036,9 @@ function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas,
                   cov={cov}
                   enabled={coberturas[cov.key]}
                   onToggle={checked => setCoberturas(prev => ({ ...prev, [cov.key]: checked }))}
+                  pct={pctCoberturas[cov.key]}
+                  onPctChange={val => setPctCoberturas(prev => ({ ...prev, [cov.key]: val }))}
+                  totalInsured={totalInsured}
                 />
               </div>
             ))}
@@ -1733,37 +2064,17 @@ function Step3({ invoices, flete, setFlete, aranceles, setAranceles, coberturas,
             )}
           </div>
         </section>
-      </div>
-
-      {/* ── Columna derecha: Resumen persistente ── */}
-      <div style={{
-        width: 288, minHeight: 0,
-        borderLeft: `1px solid ${N[200]}`,
-        background: C.white,
-        overflowY: 'auto',
-        padding: `${SP.xl} ${SP.lg}`,
-        flexShrink: 0,
-      }}>
-        <ResumenPanelStep3
-          baseInvoices={baseInvoices}
-          fleteVal={fleteVal}
-          arancVal={arancVal}
-          prima={prima}
-          coberturas={coberturas}
-          adicExtra={adicExtra}
-          iva={iva}
-          total={total}
-        />
-      </div>
     </div>
   );
 }
 
 // ─── Step 4 — Initial shipment data ──────────────────────────────────────────
 const SHIPMENT_INIT = {
+  bl:                  'MSCUGF123456',
   puertoOrigen:        'Puerto de Shanghai, CN',
+  puertoDestino:       'Puerto de Cartagena, CO',
   incoterm:            'CIF',
-  pesoTotal:           '2,450 kg',
+  pesoTotal:           '2,450',
   paisDestino:         'Colombia',
   ciudadDestino:       'Bogotá',
   descripcion:         'Maquinaria industrial de perforación y herramientas',
@@ -1772,7 +2083,7 @@ const SHIPMENT_INIT = {
 };
 
 // ─── Step 4 — Resumen panel (reusa ResumenRow) ────────────────────────────────
-function ResumenPanelStep4({ totalInsured, prima, adicExtra, iva, total }) {
+function ResumenPanelStep4({ totalInsured, prima, adicExtra, contenedorPrima = 0, iva, total }) {
   const fmt    = n => n.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtInt = n => n.toLocaleString('es-CO', { minimumFractionDigits: 0 });
 
@@ -1796,6 +2107,9 @@ function ResumenPanelStep4({ totalInsured, prima, adicExtra, iva, total }) {
         {adicExtra > 0 && (
           <ResumenRow label="Coberturas adicionales" value={`+USD ${fmt(adicExtra)}`} />
         )}
+        {contenedorPrima > 0 && (
+          <ResumenRow label="Contenedor" value={`+USD ${fmt(contenedorPrima)}`} />
+        )}
         <ResumenRow label="IVA"             value={`USD ${fmt(iva)}`} />
       </div>
 
@@ -1814,20 +2128,7 @@ function ResumenPanelStep4({ totalInsured, prima, adicExtra, iva, total }) {
 }
 
 // ─── Step 4 — Main layout ─────────────────────────────────────────────────────
-function Step4({ invoices, flete, aranceles, adicCoberturas, shipmentData, setShipmentData }) {
-  const baseInvoices = invoices.reduce((acc, inv) => {
-    if (!inv.enabled) return acc;
-    return acc + (inv.valueMode === 'complete' ? inv.amount : (parseFloat(inv.partialValue) || 0));
-  }, 0);
-  const fleteVal  = parseFloat(flete)    || 0;
-  const arancVal  = parseFloat(aranceles) || 0;
-  const totalInsured = baseInvoices + fleteVal + arancVal;
-  const prima     = totalInsured * 0.0035;
-  const adicExtra = STEP3_STANDARD.reduce((sum, cov) => sum + (adicCoberturas[cov.key] ? cov.price : 0), 0);
-  const subtotal  = prima + adicExtra;
-  const iva       = subtotal * 0.19;
-  const total     = subtotal + iva;
-
+function Step4({ shipmentData, setShipmentData }) {
   function update(key, val) {
     setShipmentData(prev => ({ ...prev, [key]: val }));
   }
@@ -1840,15 +2141,12 @@ function Step4({ invoices, flete, aranceles, adicCoberturas, shipmentData, setSh
   );
 
   return (
-    <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-
-      {/* ── Columna izquierda ── */}
-      <div style={{
-        flex: 1, minHeight: 0, overflowY: 'auto',
-        padding: `${SP.xl} 28px ${SP.xl} ${SP.xl}`,
-        display: 'flex', flexDirection: 'column', gap: SP.lg,
-        background: N[50],
-      }}>
+    <div style={{
+      flex: 1, minHeight: 0, overflowY: 'auto',
+      padding: `${SP.xl} 28px ${SP.xl} ${SP.xl}`,
+      display: 'flex', flexDirection: 'column', gap: SP.lg,
+      background: N[50],
+    }}>
 
         {/* Encabezado descriptivo */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: SP.sm }}>
@@ -1965,25 +2263,6 @@ function Step4({ invoices, flete, aranceles, adicCoberturas, shipmentData, setSh
           </div>
 
         </div>
-      </div>
-
-      {/* ── Columna derecha: Resumen persistente ── */}
-      <div style={{
-        width: 288, minHeight: 0,
-        borderLeft: `1px solid ${N[200]}`,
-        background: C.white,
-        overflowY: 'auto',
-        padding: `${SP.xl} ${SP.lg}`,
-        flexShrink: 0,
-      }}>
-        <ResumenPanelStep4
-          totalInsured={totalInsured}
-          prima={prima}
-          adicExtra={adicExtra}
-          iva={iva}
-          total={total}
-        />
-      </div>
     </div>
   );
 }
@@ -2003,7 +2282,7 @@ function SummaryRow({ label, valueNode, topBorder = true }) {
 }
 
 // ─── Step 5 — Main layout ─────────────────────────────────────────────────────
-function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adicCoberturas }) {
+function Step5({ coverage, invoices, contenedorEnabled, contenedorCount, contenedorValue, flete, aranceles, adicCoberturas, pctCoberturas, contenedorPrima = 0 }) {
   const fmt    = n => n.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtInt = n => n.toLocaleString('es-CO', { minimumFractionDigits: 0 });
 
@@ -2014,16 +2293,19 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
   const fleteVal     = parseFloat(flete)     || 0;
   const arancVal     = parseFloat(aranceles)  || 0;
   const totalInsured = baseInvoices + fleteVal + arancVal;
-  const prima        = totalInsured * 0.0035;
-  const adicExtra    = STEP3_STANDARD.reduce((sum, cov) => sum + (adicCoberturas[cov.key] ? cov.price : 0), 0);
-  const subtotal     = prima + adicExtra;
-  const iva          = subtotal * 0.19;
-  const total        = subtotal + iva;
+  const lucroAmt     = adicCoberturas.lucro  ? totalInsured * ((parseFloat(pctCoberturas.lucro)  || 0) / 100) : 0;
+  const gastosAmt    = adicCoberturas.gastos ? totalInsured * ((parseFloat(pctCoberturas.gastos) || 0) / 100) : 0;
+  const totalAsegurado = totalInsured + lucroAmt + gastosAmt;
+  const primaNeta    = totalAsegurado * 0.0043;
+  const iva          = primaNeta * 0.16;
+  const total        = primaNeta + iva + contenedorPrima;
+  const numCont      = parseInt(contenedorCount) || 0;
+  const valCont      = parseFloat(contenedorValue) || 0;
 
   const coverageLabel = {
-    'door-to-door':   'De bodega a bodega — cubre todo el trayecto',
-    'origin-to-door': 'Desde que embarca — hasta tu bodega',
-    'dest-to-door':   'Desde que llega al país — hasta tu bodega',
+    'door-to-door':   'Bodega a bodega',
+    'origin-to-door': 'Desde puerto de origen',
+    'dest-to-door':   'Desde puerto de destino',
   }[coverage] ?? coverage;
 
   const hasAdicionales = adicCoberturas.lucro || adicCoberturas.gastos;
@@ -2120,20 +2402,19 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
               );
             })}
 
-            {/* Contenedores incluidos */}
-            {CONTAINERS_DATA.some(c => contenedoresChecked[c.id]) && (
+            {/* Contenedor */}
+            {contenedorEnabled && numCont > 0 && (
               <>
-                <CardSectionLabel>Contenedor incluido</CardSectionLabel>
-                {CONTAINERS_DATA.filter(c => contenedoresChecked[c.id]).map((c, i) => (
-                  <SummaryRow
-                    key={c.id}
-                    topBorder={i > 0}
-                    label={`${c.number} · ${c.line}`}
-                    valueNode={
-                      <Badge label={c.size} variant="neutral" size="small" badgeStyle="light" border={true} />
-                    }
-                  />
-                ))}
+                <CardSectionLabel>Contenedor</CardSectionLabel>
+                <SummaryRow
+                  topBorder={false}
+                  label={`${numCont} contenedor${numCont > 1 ? 'es' : ''}`}
+                  valueNode={
+                    valCont > 0
+                      ? <p style={{ ...TYP.labelMd, color: C.primaryDark, margin: 0 }}>USD {fmtInt(numCont * valCont)}</p>
+                      : <Badge label="Sin valor" variant="neutral" size="small" badgeStyle="light" border={true} />
+                  }
+                />
               </>
             )}
 
@@ -2166,14 +2447,14 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
                   <SummaryRow
                     topBorder={false}
                     label="Lucro cesante"
-                    valueNode={<Badge label="+USD 18" variant="success" size="small" badgeStyle="light" border={true} />}
+                    valueNode={<Badge label={`+USD ${fmtInt(lucroAmt)}`} variant="success" size="small" badgeStyle="light" border={true} />}
                   />
                 )}
                 {adicCoberturas.gastos && (
                   <SummaryRow
                     topBorder={adicCoberturas.lucro}
                     label="Gastos adicionales"
-                    valueNode={<Badge label="+USD 12" variant="success" size="small" badgeStyle="light" border={true} />}
+                    valueNode={<Badge label={`+USD ${fmtInt(gastosAmt)}`} variant="success" size="small" badgeStyle="light" border={true} />}
                   />
                 )}
               </>
@@ -2207,40 +2488,89 @@ function Step5({ coverage, invoices, contenedoresChecked, flete, aranceles, adic
 
           <div style={{ padding: SP.lg }}>
 
-            {/* Desglose de costos — DS body2 + labelMd */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: SP.sm, marginBottom: SP.lg }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
-                <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>Prima base</p>
-                <p style={{ ...TYP.labelMd, color: N[700], margin: 0, whiteSpace: 'nowrap' }}>USD {fmt(prima)}</p>
-              </div>
-              {adicExtra > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
-                  <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>Coberturas adicionales</p>
-                  <p style={{ ...TYP.labelMd, color: N[700], margin: 0, whiteSpace: 'nowrap' }}>+USD {fmt(adicExtra)}</p>
+            {contenedorEnabled && contenedorPrima > 0 ? (
+              <>
+                {/* ── Sección Mercancía ── */}
+                <p style={{ ...TYP.labelSm, color: N[400], textTransform: 'uppercase', letterSpacing: '0.07em', margin: `0 0 ${SP.sm}` }}>
+                  Mercancía
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: SP.sm }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+                    <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>Valor asegurado</p>
+                    <p style={{ ...TYP.labelMd, color: N[700], margin: 0, whiteSpace: 'nowrap' }}>USD {fmtInt(totalAsegurado)}</p>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+                    <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>Prima neta (0.43%)</p>
+                    <p style={{ ...TYP.labelMd, color: N[700], margin: 0, whiteSpace: 'nowrap' }}>USD {fmt(primaNeta)}</p>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+                    <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>IVA (16%)</p>
+                    <p style={{ ...TYP.labelMd, color: N[700], margin: 0, whiteSpace: 'nowrap' }}>USD {fmt(iva)}</p>
+                  </div>
                 </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
-                <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>IVA</p>
-                <p style={{ ...TYP.labelMd, color: N[700], margin: 0, whiteSpace: 'nowrap' }}>USD {fmt(iva)}</p>
-              </div>
-            </div>
 
-            {/* Separador DS */}
-            <div style={{ height: 1, background: C.gray200, marginBottom: SP.lg }} />
+                <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
 
-            {/* Total — DS typography.h1 (token más prominente: 40px · 700 · 1.2) */}
-            <div style={{ marginBottom: SP.xxs }}>
-              <p style={{ ...TYP.labelSm, color: N[400], textTransform: 'uppercase', letterSpacing: '0.07em', margin: `0 0 ${SP.xxs}` }}>
-                Total con IVA incluido
-              </p>
-              <p style={{ ...TYP.h1, color: C.primary, margin: 0 }}>
-                USD {fmt(total)}
-              </p>
-              <p style={{ ...TYP.caption, color: N[400], margin: `${SP.xxs} 0 0` }}>
-                IVA incluido
-              </p>
-            </div>
+                {/* ── Sección Contenedor ── */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: SP.sm }}>
+                  <p style={{ ...TYP.labelSm, color: N[400], textTransform: 'uppercase', letterSpacing: '0.07em', margin: 0 }}>
+                    Contenedor
+                  </p>
+                  <Badge label="Certificado independiente" variant="warning" size="small" badgeStyle="light" border={true} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: SP.sm }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+                    <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>Valor asegurado</p>
+                    <p style={{ ...TYP.labelMd, color: N[700], margin: 0, whiteSpace: 'nowrap' }}>USD {fmtInt(numCont * valCont)}</p>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+                    <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>Prima (0.43%)</p>
+                    <p style={{ ...TYP.labelMd, color: N[700], margin: 0, whiteSpace: 'nowrap' }}>USD {fmt(contenedorPrima)}</p>
+                  </div>
+                </div>
 
+                <div style={{ height: 1, background: N[200], margin: `${SP.ms} 0` }} />
+
+                {/* ── Total consolidado ── */}
+                <p style={{ ...TYP.labelSm, color: N[400], textTransform: 'uppercase', letterSpacing: '0.07em', margin: `0 0 ${SP.xxs}` }}>
+                  Total consolidado
+                </p>
+                <p style={{ ...TYP.h1, color: C.primary, margin: 0 }}>
+                  USD {fmt(total)}
+                </p>
+                <p style={{ ...TYP.caption, color: N[400], margin: `${SP.xxs} 0 0` }}>
+                  IVA incluido
+                </p>
+              </>
+            ) : (
+              <>
+                {/* ── Layout sin contenedor ── */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: SP.sm, marginBottom: SP.lg }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+                    <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>Prima neta (0.43%)</p>
+                    <p style={{ ...TYP.labelMd, color: N[700], margin: 0, whiteSpace: 'nowrap' }}>USD {fmt(primaNeta)}</p>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SP.xs }}>
+                    <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>IVA (16%)</p>
+                    <p style={{ ...TYP.labelMd, color: N[700], margin: 0, whiteSpace: 'nowrap' }}>USD {fmt(iva)}</p>
+                  </div>
+                </div>
+
+                <div style={{ height: 1, background: C.gray200, marginBottom: SP.lg }} />
+
+                <div style={{ marginBottom: SP.xxs }}>
+                  <p style={{ ...TYP.labelSm, color: N[400], textTransform: 'uppercase', letterSpacing: '0.07em', margin: `0 0 ${SP.xxs}` }}>
+                    Total con IVA incluido
+                  </p>
+                  <p style={{ ...TYP.h1, color: C.primary, margin: 0 }}>
+                    USD {fmt(total)}
+                  </p>
+                  <p style={{ ...TYP.caption, color: N[400], margin: `${SP.xxs} 0 0` }}>
+                    IVA incluido
+                  </p>
+                </div>
+              </>
+            )}
 
           </div>
         </div>
@@ -2271,7 +2601,7 @@ const DS_STEP = {
   border:      N[200],
 };
 
-const WIZARD_STEPS = ['Tu cobertura', 'Adicionales', 'Tus datos', 'Resumen'];
+const WIZARD_STEPS = ['Cobertura', 'Confirmar'];
 const CIRCLE_SIZE  = 28; // px
 const CONNECTOR_TOP = CIRCLE_SIZE / 2; // 14px — alinea al centro del círculo
 
@@ -2361,14 +2691,16 @@ function StepBar({ activeStep }) {
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
 export default function InsuranceModal({ open, onClose, onEmit }) {
-  const [coverage, setCoverage]             = useState(null);
-  const [invoices, setInvoices]             = useState(INVOICES_INIT);
-  const [contenedoresChecked, setContenedoresChecked] = useState(
-    () => Object.fromEntries(CONTAINERS_DATA.map(c => [c.id, true]))
-  );
-  const [flete, setFlete]                   = useState('');
-  const [aranceles, setAranceles]           = useState('');
-  const [adicCoberturas, setAdicCoberturas] = useState({ lucro: true, gastos: true });
+  const [coverage, setCoverage]               = useState(null);
+  const [invoices, setInvoices]               = useState(INVOICES_INIT);
+  const [contenedorEnabled, setContenedorEnabled] = useState(false);
+  const [contenedorNombre, setContenedorNombre]   = useState('TCKU3456789');
+  const [contenedorNaviera, setContenedorNaviera] = useState('Evergreen');
+  const [contenedorTipo, setContenedorTipo]       = useState("40' HC");
+  const [flete, setFlete]                     = useState('');
+  const [aranceles, setAranceles]             = useState('');
+  const [adicCoberturas, setAdicCoberturas]   = useState({ lucro: true, gastos: true });
+  const [pctCoberturas, setPctCoberturas]     = useState({ lucro: 10, gastos: 5 });
   const [shipmentData, setShipmentData]     = useState(SHIPMENT_INIT);
   const [emitted, setEmitted]               = useState(false);
   const [step, setStep]                     = useState(1);
@@ -2398,14 +2730,17 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
 
   if (!open) return null;
 
-  // Total for step-4 CTA label
-  const _baseInv    = invoices.reduce((acc, inv) => !inv.enabled ? acc : acc + (inv.valueMode === 'complete' ? inv.amount : (parseFloat(inv.partialValue) || 0)), 0);
-  const _totalIns   = _baseInv + (parseFloat(flete) || 0) + (parseFloat(aranceles) || 0);
-  const _prima      = _totalIns * 0.0035;
-  const _contCost   = CONTAINERS_DATA.filter(c => contenedoresChecked[c.id]).reduce((s, c) => s + c.pricePerCert, 0);
-  const _adicExtra  = STEP3_STANDARD.reduce((s, cov) => s + (adicCoberturas[cov.key] ? cov.price : 0), 0);
-  const _modalTotal = (_prima + _adicExtra + _contCost) * 1.19;
-  const _fmtTotal   = _modalTotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Total for step-4 CTA label (same calculation as ResumenSidebar)
+  const _baseInv         = invoices.reduce((acc, inv) => !inv.enabled ? acc : acc + (inv.valueMode === 'complete' ? inv.amount : (parseFloat(inv.partialValue) || 0)), 0);
+  const _totalBase       = _baseInv + (parseFloat(flete) || 0) + (parseFloat(aranceles) || 0);
+  const _lucroAmt        = adicCoberturas.lucro  ? _totalBase * ((parseFloat(pctCoberturas.lucro)  || 0) / 100) : 0;
+  const _gastosAmt       = adicCoberturas.gastos ? _totalBase * ((parseFloat(pctCoberturas.gastos) || 0) / 100) : 0;
+  const _totalAsegurado  = _totalBase + _lucroAmt + _gastosAmt;
+  const _primaNeta       = _totalAsegurado * 0.0043;
+  const _ivaModal        = _primaNeta * 0.16;
+  const _contenedorPrima = 0;
+  const _modalTotal      = _primaNeta + _ivaModal + _contenedorPrima;
+  const _fmtTotal        = _modalTotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: C.gray100 }}>
@@ -2449,45 +2784,90 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
 
       {/* ── Body ── */}
       {emitted ? (
-        <SuccessScreen onListo={handleListo} />
-      ) : step === 1 ? (
-        <Step2
-          coverage={coverage}
-          onCoverageChange={id => setCoverage(id)}
-          invoices={invoices}
-          onUpdateInvoice={handleUpdateInvoice}
-          contenedoresChecked={contenedoresChecked}
-          setContenedoresChecked={setContenedoresChecked}
-        />
+        <SuccessScreen onListo={handleListo} contenedorEnabled={contenedorEnabled} />
       ) : step === 2 ? (
-        <Step3
-          invoices={invoices}
-          flete={flete}
-          setFlete={setFlete}
-          aranceles={aranceles}
-          setAranceles={setAranceles}
-          coberturas={adicCoberturas}
-          setCoberturas={setAdicCoberturas}
-          paisDestino={shipmentData.paisDestino}
-        />
-      ) : step === 3 ? (
-        <Step4
-          invoices={invoices}
-          flete={flete}
-          aranceles={aranceles}
-          adicCoberturas={adicCoberturas}
-          shipmentData={shipmentData}
-          setShipmentData={setShipmentData}
-        />
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          {/* ── Left: logistics review ── */}
+          <div style={{
+            flex: 1, minHeight: 0, overflowY: 'auto',
+            padding: `${SP.xl} 28px ${SP.xl} ${SP.xl}`,
+            display: 'flex', flexDirection: 'column', gap: SP.lg,
+            background: N[50],
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SP.xs }}>
+              <p style={{ ...TYP.h3, color: N[700], margin: 0 }}>Revisa los datos de tu operación</p>
+              <p style={{ ...TYP.body2, color: N[500], margin: 0 }}>
+                Confirma que todo coincida con tu BL y documentación aduanera.
+              </p>
+            </div>
+            <Section title="Información logística">
+              <InformacionLogistica shipmentData={shipmentData} setShipmentData={setShipmentData} />
+            </Section>
+          </div>
+          {/* ── Right: summary sidebar ── */}
+          <div style={{
+            width: 288, flexShrink: 0,
+            borderLeft: `1px solid ${N[200]}`,
+            background: C.white,
+            overflowY: 'auto',
+            padding: `${SP.xl} ${SP.lg}`,
+          }}>
+            <ResumenSidebar
+              coverage={coverage}
+              invoices={invoices}
+              flete={flete}
+              aranceles={aranceles}
+              adicCoberturas={adicCoberturas}
+              pctCoberturas={pctCoberturas}
+              contenedorPrima={_contenedorPrima}
+            />
+          </div>
+        </div>
       ) : (
-        <Step5
-          coverage={coverage}
-          invoices={invoices}
-          contenedoresChecked={contenedoresChecked}
-          flete={flete}
-          aranceles={aranceles}
-          adicCoberturas={adicCoberturas}
-        />
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          {/* ── Left column: step 1 ── */}
+          <Step2
+            coverage={coverage}
+            onCoverageChange={id => setCoverage(id)}
+            invoices={invoices}
+            onUpdateInvoice={handleUpdateInvoice}
+            contenedorEnabled={contenedorEnabled}
+            setContenedorEnabled={setContenedorEnabled}
+            contenedorNombre={contenedorNombre}
+            setContenedorNombre={setContenedorNombre}
+            contenedorNaviera={contenedorNaviera}
+            setContenedorNaviera={setContenedorNaviera}
+            contenedorTipo={contenedorTipo}
+            setContenedorTipo={setContenedorTipo}
+            flete={flete}
+            setFlete={setFlete}
+            aranceles={aranceles}
+            setAranceles={setAranceles}
+            adicCoberturas={adicCoberturas}
+            setAdicCoberturas={setAdicCoberturas}
+            pctCoberturas={pctCoberturas}
+            setPctCoberturas={setPctCoberturas}
+            paisDestino={shipmentData.paisDestino}
+          />
+          {/* ── Right panel: persistent sidebar ── */}
+          <div style={{
+            width: 288, flexShrink: 0,
+            borderLeft: `1px solid ${N[200]}`,
+            background: C.white,
+            overflowY: 'auto',
+            padding: `${SP.xl} ${SP.lg}`,
+          }}>
+            <ResumenSidebar
+              coverage={coverage}
+              invoices={invoices}
+              flete={flete}
+              aranceles={aranceles}
+              adicCoberturas={adicCoberturas}
+              pctCoberturas={pctCoberturas}
+              contenedorPrima={_contenedorPrima}
+            />
+          </div>
+        </div>
       )}
 
       {/* ── Footer — DS Buttons ── */}
@@ -2511,36 +2891,8 @@ export default function InsuranceModal({ open, onClose, onEmit }) {
           <Button variant="secondary" size="medium" onClick={() => setStep(1)}>
             Atrás
           </Button>
-          <Button variant="primary" size="medium" onClick={() => setStep(3)}>
-            Continuar
-          </Button>
-        </div>
-      )}
-      {!emitted && step === 3 && (
-        <div style={{
-          display: 'flex', justifyContent: 'space-between',
-          padding: `${SP.ms} ${SP.xl}`, borderTop: `1px solid ${C.gray200}`,
-          flexShrink: 0, background: C.white,
-        }}>
-          <Button variant="secondary" size="medium" onClick={() => setStep(2)}>
-            Atrás
-          </Button>
-          <Button variant="primary" size="medium" onClick={() => setStep(4)}>
-            Continuar
-          </Button>
-        </div>
-      )}
-      {!emitted && step === 4 && (
-        <div style={{
-          display: 'flex', justifyContent: 'space-between',
-          padding: `${SP.ms} ${SP.xl}`, borderTop: `1px solid ${C.gray200}`,
-          flexShrink: 0, background: C.white,
-        }}>
-          <Button variant="secondary" size="medium" onClick={() => setStep(3)}>
-            Atrás
-          </Button>
           <Button variant="primary" size="medium" onClick={() => setEmitted(true)}>
-            Pagar — USD {_fmtTotal} con IVA
+            Emitir póliza
           </Button>
         </div>
       )}
